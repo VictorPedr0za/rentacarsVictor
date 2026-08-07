@@ -40,8 +40,8 @@ Sin esto el PDF no se entiende. Son los 12 términos que vas a ver todo el tiemp
 **Paso 1 — Crear el usuario y la base.** Conectado como `postgres` (superusuario), ejecuta una sola vez:
 
 ```sql
-CREATE USER alquiler_vehiculos WITH ENCRYPTED PASSWORD 'alquiler';
-CREATE DATABASE alquiler_vehiculos WITH OWNER alquiler_vehiculos;
+create user cloud_usr with encrypted password 'cloud_pwd';
+create database alquilerautos_db with owner cloud_usr;
 ```
 
 **Paso 2 — Correr el script.** Conéctate a la base `alquiler_vehiculos` y ejecuta el archivo **`script_bd.sql`** que está en la raíz del proyecto. Crea las 6 tablas y mete 8 filas de prueba en cada una.
