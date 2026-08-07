@@ -8,6 +8,7 @@ public class RentacarsApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(RentacarsApplication.class, args);
+		System.out.println("HolI");
 	}
 
 }
