@@ -7,7 +7,9 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class CreateAlquilerResponse {
+public class UpdateAlquilerResponse {
+
+    //atributos a actualizar
 
     private Long idAlquiler;
     private Long idCliente;
