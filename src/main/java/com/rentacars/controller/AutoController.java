@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/autos")
 @RequiredArgsConstructor
@@ -22,4 +24,12 @@ public class AutoController {
             @Valid @RequestBody UpdateAutoRequest request) {
         return ResponseEntity.ok(autoService.actualizarDisponibilidad(id, request));
     }
+    // HU-09 (Suarez):
+    @GetMapping
+    public ResponseEntity<List<CreateAutoResponse>> buscarAutos(
+            @RequestParam(required = false) String ciudad,
+            @RequestParam(required = false, name = "id_categoria") Long idCategoria) {
+        return ResponseEntity.ok(autoService.buscarAutos(ciudad, idCategoria));
+    }
+
 }

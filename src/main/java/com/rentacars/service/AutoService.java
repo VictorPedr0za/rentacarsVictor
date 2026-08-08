@@ -12,6 +12,9 @@ import com.rentacars.dto.response.CreateAutoResponse;
  */
 public interface AutoService {
 
-    // HU-11 (SUAREZ)
+    // HU-11 (Suarez)
     CreateAutoResponse actualizarDisponibilidad (Long id, UpdateAutoRequest request);
+
+    // HU-09 (Suarez)
+    java.util.List<CreateAutoResponse> buscarAutos (String ciudad, Long idCategoria);
 }
