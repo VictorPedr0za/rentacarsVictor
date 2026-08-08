@@ -38,7 +38,7 @@ public interface TiendaService {
     // List<CreateTiendaResponse> listarTiendas(String ciudad);
 
     // HU-04 (Corrales):
-    // void eliminarTienda(Long id);
+     void eliminarTienda(Long id);
 
     // HU-05 (Corrales):
     // CreateTiendaResponse obtenerTienda(Long id);

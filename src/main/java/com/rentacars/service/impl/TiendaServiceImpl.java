@@ -2,6 +2,7 @@ package com.rentacars.service.impl;
 
 import com.rentacars.dto.request.CreateTiendaRequest;
 import com.rentacars.dto.response.CreateTiendaResponse;
+import com.rentacars.exception.ResourceNotFoundException;
 import com.rentacars.mapper.TiendaMapper;
 import com.rentacars.model.Tienda;
 import com.rentacars.repository.TiendaRepository;
@@ -66,6 +67,14 @@ public class TiendaServiceImpl implements TiendaService {
 
         // 3. Traducir la entidad guardada al DTO de respuesta
         return tiendaMapper.toResponse(tiendaGuardada);
+    }
+
+    @Override
+    @Transactional
+    public void eliminarTienda(Long id) {
+        Tienda tienda = tiendaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tienda no encontrada con ID: " + id));
+        tiendaRepository.delete(tienda);
     }
 
     // ------------------------------------------------------------------
