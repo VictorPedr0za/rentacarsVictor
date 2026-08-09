@@ -22,8 +22,9 @@ public class CreateAutoResponse {
     private Long idTienda;
     private Long idCategoria;
 
-    
 
+    public CreateAutoResponse(Long idAuto, Boolean disponibilidad) {
+    }
 }
 
 
