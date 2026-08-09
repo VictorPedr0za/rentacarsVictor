@@ -129,7 +129,7 @@ public class AutoController {
         autoService.deleteAuto(id);
 
         //arma mensaje de confirmacion
-        String mensaje = "Se ha eliminado el auto con id " + id;
+        String mensaje = "Se ha eliminado el auto con id: " + id;
 
         //devuelve mensaje con 200 OK
         return new ResponseEntity<>(mensaje, HttpStatus.OK);
