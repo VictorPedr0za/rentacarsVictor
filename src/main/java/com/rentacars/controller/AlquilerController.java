@@ -91,6 +91,7 @@ public class AlquilerController {
         );
     }
 
+    /*
     //elimina alquiler
     @DeleteMapping("/delete/{id}")
     @Operation(summary = "eliminar alquiler")
@@ -104,6 +105,21 @@ public class AlquilerController {
                 "Alquiler eliminado correctamente",
                 HttpStatus.OK
         );
+    }
+
+    */
+
+    //elimina alquiler
+    // HU-22 (Cardona): ruta y codigo del backlog
+    @DeleteMapping("/{id}")
+    @Operation(summary = "cancelar alquiler")
+    public ResponseEntity<Void> deleteAlquiler(@PathVariable Long id) {
+
+        //llama service delete
+        alquilerService.deleteAlquiler(id);
+
+        //devuelve 204 sin contenido
+        return ResponseEntity.noContent().build();
     }
 
 }
