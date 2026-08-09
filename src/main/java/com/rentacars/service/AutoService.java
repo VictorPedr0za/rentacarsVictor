@@ -1,8 +1,8 @@
 package com.rentacars.service;
 
-
 import com.rentacars.dto.request.CreateAutoRequest;
 import com.rentacars.dto.response.CreateAutoResponse;
+import com.rentacars.dto.response.CreateDetalle_autoResponse;
 import com.rentacars.dto.request.UpdateAutoRequest;
 import com.rentacars.dto.response.UpdateAutoResponse;
 
@@ -14,6 +14,7 @@ import java.util.List;
  *   HU-09 (Suarez) -> buscarAutos
  *   HU-10 (Suarez) -> actualizarDetalles
  *   HU-11 (Suarez) -> actualizarDisponibilidad
+ *   HU-12 (Cardona) -> getAutoById ahora retorna el detalle completo
  */
 
 
@@ -31,7 +32,11 @@ public interface AutoService {
     List<CreateAutoResponse> getAllAutos();
 
     //get by id
-    CreateAutoResponse getAutoById(Long id);
+    //CreateAutoResponse getAutoById(Long id);
+
+    //get by id
+    // HU-12 (Cardona): detalle completo del auto (autos + detalles_autos) con precio calculado
+    CreateDetalle_autoResponse getAutoById(Long id);
 
     //put
     UpdateAutoResponse updateAuto(Long id, UpdateAutoRequest updateAutoRequest) throws Exception;

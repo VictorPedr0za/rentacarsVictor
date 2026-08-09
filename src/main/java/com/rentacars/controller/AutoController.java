@@ -4,18 +4,19 @@ package com.rentacars.controller;
 import com.rentacars.dto.request.CreateAutoRequest;
 import com.rentacars.dto.response.CreateAutoResponse;
 import com.rentacars.dto.request.UpdateAutoRequest;
+import com.rentacars.dto.response.CreateDetalle_autoResponse;
 import com.rentacars.dto.response.UpdateAutoResponse;
 import com.rentacars.service.AutoService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import com.rentacars.dto.request.UpdateAutoRequest;
 import com.rentacars.dto.response.CreateAutoResponse;
 import com.rentacars.service.AutoService;
+
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 //importa el valid
@@ -71,15 +72,16 @@ public class AutoController {
     }
 
     //obtiene por id
+    // HU-12 (Cardona): detalle completo del auto con precio calculado
     @GetMapping("/{id}")
-    @Operation(summary = "buscar auto por id")
-    public ResponseEntity<CreateAutoResponse> getAutoById(@PathVariable Long id){
+    @Operation(summary = "ver detalle completo de un auto")
+    public ResponseEntity<CreateDetalle_autoResponse> getAutoById(@PathVariable Long id){
 
-        CreateAutoResponse autoResponse = autoService.getAutoById(id);
+        CreateDetalle_autoResponse autoResponse = autoService.getAutoById(id);
 
         return new ResponseEntity<>(
                 autoResponse,
-                HttpStatus.CREATED
+                HttpStatus.OK
         );
 
     }
