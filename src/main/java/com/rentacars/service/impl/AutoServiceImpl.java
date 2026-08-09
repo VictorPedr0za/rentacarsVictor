@@ -1,27 +1,10 @@
 package com.rentacars.service.impl;
 
 
-import com.rentacars.dto.request.CreateAutoRequest;
+import com.rentacars.dto.request.*;
 import com.rentacars.dto.response.CreateAutoResponse;
 import com.rentacars.dto.response.UpdateAutoResponse;
-import com.rentacars.dto.request.UpdateAutoRequest;
 import com.rentacars.exception.BadRequestException;
-import com.rentacars.exception.ResourceNotFoundException;
-import com.rentacars.mapper.AutoMapper;
-import com.rentacars.model.Auto;
-import com.rentacars.repository.AutoRepository;
-import com.rentacars.service.AutoService;
-import lombok.RequiredArgsConstructor;
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.stereotype.Service;
-
-import com.rentacars.dto.request.CreateAutoRequest;
-import com.rentacars.dto.response.CreateAutoResponse;
-import com.rentacars.dto.response.CreateDetalle_autoResponse;
-import com.rentacars.dto.response.UpdateAutoResponse;
-import com.rentacars.dto.request.UpdateAutoRequest;
 import com.rentacars.exception.ResourceNotFoundException;
 import com.rentacars.mapper.AutoMapper;
 import com.rentacars.model.Auto;
@@ -30,20 +13,29 @@ import com.rentacars.repository.AutoRepository;
 import com.rentacars.repository.Detalle_autoRepository;
 import com.rentacars.service.AutoService;
 import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.rentacars.dto.response.CreateDetalle_autoResponse;
+
+// repo para chequear alquileres
+import com.rentacars.repository.AlquilerRepository;
 
 import java.util.List;
 
 
 import java.util.List;
 
+import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AutoServiceImpl implements AutoService {
 
     private final AutoRepository autoRepository;
     private final Detalle_autoRepository detalleAutoRepository;
+    // valida FK antes de borrar
+    private final AlquilerRepository alquilerRepository;
+
 
 
     //obtiene lista autos
@@ -55,6 +47,80 @@ public class AutoServiceImpl implements AutoService {
         return createAutoResponseList;
 
     }
+  
+    //HU-09  
+  @Override
+    public List<CreateAutoResponse> buscarAutos(String ciudad, Long idCategoria) {
+        List<Auto> autos = autoRepository.buscarDisponibles(ciudad, idCategoria);
+
+        return autos.stream()
+                .map(auto -> {
+                    Detalle_auto detalle = detalleAutoRepository.findByIdAuto(auto.getIdAuto())
+                            .orElseThrow(() -> new ResourceNotFoundException(
+                                    "Detalle no encontrado para auto ID: " + auto.getIdAuto()));
+
+                    CreateAutoResponse response = new CreateAutoResponse();
+                    response.setIdAuto(auto.getIdAuto());
+                    response.setDisponibilidad(auto.getDisponibilidad());
+                    response.setModelo(detalle.getModelo());
+                    response.setMarca(detalle.getMarca());
+                    response.setPrecioDia(detalle.getPrecioDia());
+                    response.setOfertaPorcentaje(detalle.getOfertaPorcentaje());
+                    return response;
+                })
+                .toList();
+    }
+
+    //HU-10
+    @Override
+    @Transactional
+    public CreateAutoResponse actualizarDetalles(Long id, UpdateDetalle_autoRequest request) {
+        Auto auto = autoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Auto no encontrado con ID: " + id));
+
+        Detalle_auto detalle = detalleAutoRepository.findByIdAuto(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Detalle no encontrado para auto ID: " + id));
+
+        if (request.getPrecioDia() != null) {
+            detalle.setPrecioDia(request.getPrecioDia());
+        }
+        if (request.getOfertaPorcentaje() != null) {
+            detalle.setOfertaPorcentaje(request.getOfertaPorcentaje());
+        }
+        if (request.getImagen() != null) {
+            detalle.setImagen(request.getImagen());
+        }
+
+        Detalle_auto detalleGuardado = detalleAutoRepository.save(detalle);
+
+        CreateAutoResponse response = new CreateAutoResponse();
+        response.setIdAuto(auto.getIdAuto());
+        response.setDisponibilidad(auto.getDisponibilidad());
+        response.setModelo(detalleGuardado.getModelo());
+        response.setMarca(detalleGuardado.getMarca());
+        response.setPrecioDia(detalleGuardado.getPrecioDia());
+        response.setOfertaPorcentaje(detalleGuardado.getOfertaPorcentaje());
+        response.setImagen(detalleGuardado.getImagen());
+        return response;
+    }
+
+    
+
+ 
+    //HU-11
+   @Override
+   @Transactional
+   public CreateAutoResponse actualizarDisponibilidad (Long id, UpdateAutoRequest request){
+       Auto auto = autoRepository.findById(id)
+               .orElseThrow(() -> new ResourceNotFoundException("Auto no encontrado con ID:"+ id));
+       auto.setDisponibilidad(request.getDisponibilidad());
+       Auto autoGuardado = autoRepository.save(auto);
+
+       CreateAutoResponse response = new CreateAutoResponse();
+       response.setIdAuto(autoGuardado.getIdAuto());
+       response.setDisponibilidad(autoGuardado.getDisponibilidad());
+       return response;
+   }
 
     // HU-12 (Cardona): obtiene el detalle completo del auto (autos + detalles_autos), con precio calculado
     @Override
@@ -171,6 +237,11 @@ public class AutoServiceImpl implements AutoService {
             throw new BadRequestException("El auto esta alquilado, no se puede eliminar");
         }
 
+        //bloquea si tiene alquileres asociados
+        if (alquilerRepository.existsByIdAuto(id)) {
+            throw new BadRequestException("El auto tiene alquileres registrados, no se puede eliminar");
+        }
+
         //borra detalle antes del auto
         detalleAutoRepository.findByIdAuto(id)
                 .ifPresent(detalleAutoRepository::delete);
@@ -179,21 +250,6 @@ public class AutoServiceImpl implements AutoService {
         autoRepository.delete(auto);
     }
 
-
-    /**
-     * HU-11: Actualizar disponibilidad de un auto.
-     * Regla: si el auto no existe -> 404 Not Found.
-     */
-    @Override
-    @Transactional
-    public CreateAutoResponse actualizarDisponibilidad (Long id, UpdateAutoRequest request){
-        Auto auto = autoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Auto no encontrado con ID:"+ id));
-        auto.setDisponibilidad(request.getDisponibilidad());
-        Auto autoGuardado = autoRepository.save(auto);
-
-        return new CreateAutoResponse(autoGuardado.getIdAuto(), autoGuardado.getDisponibilidad());
-    }
-
+  
 
 }

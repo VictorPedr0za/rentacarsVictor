@@ -6,4 +6,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AlquilerRepository extends JpaRepository<Alquiler, Long> {
+
+    // valida si el auto tiene alquileres
+    boolean existsByIdAuto(Long idAuto);
+
 }
