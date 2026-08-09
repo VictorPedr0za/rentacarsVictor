@@ -17,23 +17,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.stereotype.Service;
-
-import com.rentacars.dto.request.CreateAutoRequest;
-import com.rentacars.dto.response.CreateAutoResponse;
 import com.rentacars.dto.response.CreateDetalle_autoResponse;
-import com.rentacars.dto.response.UpdateAutoResponse;
-import com.rentacars.dto.request.UpdateAutoRequest;
-import com.rentacars.exception.ResourceNotFoundException;
-import com.rentacars.mapper.AutoMapper;
-import com.rentacars.model.Auto;
-import com.rentacars.model.Detalle_auto;
-import com.rentacars.repository.AutoRepository;
-import com.rentacars.repository.Detalle_autoRepository;
-import com.rentacars.service.AutoService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+// repo para chequear alquileres
+import com.rentacars.repository.AlquilerRepository;
 
 import java.util.List;
 
@@ -47,6 +34,9 @@ public class AutoServiceImpl implements AutoService {
 
     private final AutoRepository autoRepository;
     private final Detalle_autoRepository detalleAutoRepository;
+    // valida FK antes de borrar
+    private final AlquilerRepository alquilerRepository;
+
 
 
     //obtiene lista autos
@@ -215,6 +205,11 @@ public class AutoServiceImpl implements AutoService {
         //bloquea borrado si esta alquilado
         if (Boolean.FALSE.equals(auto.getDisponibilidad())) {
             throw new BadRequestException("El auto esta alquilado, no se puede eliminar");
+        }
+
+        //bloquea si tiene alquileres asociados
+        if (alquilerRepository.existsByIdAuto(id)) {
+            throw new BadRequestException("El auto tiene alquileres registrados, no se puede eliminar");
         }
 
         //borra detalle antes del auto
