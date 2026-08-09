@@ -5,6 +5,7 @@ import com.rentacars.dto.request.CreateAutoRequest;
 import com.rentacars.dto.response.CreateAutoResponse;
 import com.rentacars.dto.response.UpdateAutoResponse;
 import com.rentacars.dto.request.UpdateAutoRequest;
+import com.rentacars.exception.BadRequestException;
 import com.rentacars.exception.ResourceNotFoundException;
 import com.rentacars.mapper.AutoMapper;
 import com.rentacars.model.Auto;
