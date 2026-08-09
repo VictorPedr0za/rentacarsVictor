@@ -133,13 +133,16 @@ public class AutoController {
     // HU-13 (Cardona): ruta y codigo que pide el backlog
     @DeleteMapping("/{id}")
     @Operation(summary = "eliminar auto")
-    public ResponseEntity<Void> deleteAuto(@PathVariable Long id) {
+    public ResponseEntity<String> deleteAuto(@PathVariable Long id) {
 
         //llama service delete
         autoService.deleteAuto(id);
 
-        //devuelve 204 sin contenido
-        return ResponseEntity.noContent().build();
+        //arma mensaje de confirmacion
+        String mensaje = "Se ha eliminado el auto con id: " + id;
+
+        //devuelve mensaje con 200 OK
+        return new ResponseEntity<>(mensaje, HttpStatus.OK);
       
     }
 
