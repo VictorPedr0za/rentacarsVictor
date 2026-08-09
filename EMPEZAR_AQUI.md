@@ -318,4 +318,4 @@ Antes de preguntar, revisa en este orden:
 3. ¿Tu rama está actualizada? `git pull origin develop`
 4. ¿Buscaste el error en la tabla de la sección 4?
 
-Y cuando pidas ayuda, manda **el mensaje de error completo**, no "no me funciona".
+

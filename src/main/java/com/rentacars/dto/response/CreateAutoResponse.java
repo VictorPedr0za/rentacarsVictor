@@ -1,7 +1,9 @@
 package com.rentacars.dto.response;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
@@ -13,18 +15,27 @@ import java.math.BigDecimal;
  */
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateAutoResponse {
-
-
-    //HU-11(Suarez)
-    private Long idAuto;
-    private Boolean disponibilidad;
 
     //HU-09 (Suarez)
     private String modelo;
     private String marca;
     private BigDecimal precioDia;
-    private BigDecimal ofertaPorcentaje;
+    private BigDecimal ofertaPorcentaje;  
+  
+    //HU-11(Suarez)
+    private Long idAuto;
+    private Boolean disponibilidad;
+    private Long idTienda;
+    private Long idCategoria;
+  
+    public CreateAutoResponse(Long idAuto, Boolean disponibilidad) {
+    }
+
 }
+
+
+
