@@ -5,6 +5,7 @@ import com.rentacars.dto.response.CreateAutoResponse;
 import com.rentacars.dto.response.CreateDetalle_autoResponse;
 import com.rentacars.dto.request.UpdateAutoRequest;
 import com.rentacars.dto.response.UpdateAutoResponse;
+import com.rentacars.dto.request.UpdateDetalle_autoRequest;
 
 import java.util.List;
 
@@ -23,9 +24,13 @@ public interface AutoService {
   
     // HU-09 (Suarez)
     java.util.List<CreateAutoResponse> buscarAutos (String ciudad, Long idCategoria);
-  
+
     // HU-11 (Suarez)
-    CreateAutoResponse actualizarDisponibilidad (Long id, UpdateAutoRequest request);
+    CreateAutoResponse actualizarDisponibilidad (Long id, UpdateAutoRequest updateAutoRequest);
+
+    // HU-10 (Suarez)
+    CreateAutoResponse actualizarDetalles (Long id, UpdateDetalle_autoRequest updateDetalle_autoRequest);
+
 
     CreateAutoResponse createAuto(CreateAutoRequest createAutoRequest) throws Exception;
 

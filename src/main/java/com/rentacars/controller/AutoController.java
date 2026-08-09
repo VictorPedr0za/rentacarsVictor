@@ -2,6 +2,7 @@ package com.rentacars.controller;
 
 
 import com.rentacars.dto.request.CreateAutoRequest;
+import com.rentacars.dto.request.UpdateDetalle_autoRequest;
 import com.rentacars.dto.response.CreateAutoResponse;
 import com.rentacars.dto.request.UpdateAutoRequest;
 import com.rentacars.dto.response.CreateDetalle_autoResponse;
@@ -43,6 +44,15 @@ public class AutoController {
             @RequestParam(required = false) String ciudad,
             @RequestParam(required = false, name = "id_categoria") Long idCategoria) {
         return ResponseEntity.ok(autoService.buscarAutos(ciudad, idCategoria));
+    }
+
+    // HU-10 (Suarez):
+    @PutMapping("/{id}")
+    @Operation(summary = "actualizar detalles comerciales de un auto")
+    public ResponseEntity<CreateAutoResponse> actualizarDetalles(
+            @PathVariable Long id,
+            @RequestBody UpdateDetalle_autoRequest request) {
+        return ResponseEntity.ok(autoService.actualizarDetalles(id, request));
     }
 
     //HU-11 (SUAREZ):
