@@ -7,10 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * PLANTILLA DE CONTROLLER -- copien este patron para las demas HU.
@@ -70,6 +67,11 @@ public class TiendaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> eliminarTienda(@PathVariable Long id) {
+        tiendaService.eliminarTienda(id);
+        return ResponseEntity.ok("Reserva eliminada exitosamente");
+    }
     // ------------------------------------------------------------------
     // PENDIENTES EN ESTE ARCHIVO:
     //

@@ -1,10 +1,20 @@
 package com.rentacars.dto.response;
 
-import lombok.Builder;
-import lombok.Getter;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+*   HU-11 (Suarez) -> idAuto, disponibilidad
+ */
 @Getter
+@Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreateAutoResponse {
 
     private Long idAuto;
@@ -12,4 +22,9 @@ public class CreateAutoResponse {
     private Long idTienda;
     private Long idCategoria;
 
+    
+
 }
+
+
+
