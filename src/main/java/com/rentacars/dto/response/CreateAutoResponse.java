@@ -24,16 +24,23 @@ public class CreateAutoResponse {
     private String modelo;
     private String marca;
     private BigDecimal precioDia;
-    private BigDecimal ofertaPorcentaje;  
-  
+    private BigDecimal ofertaPorcentaje;
+
+    //HU-10 (Suarez)
+    private String imagen;
+
+
+
     //HU-11(Suarez)
     private Long idAuto;
     private Boolean disponibilidad;
     private Long idTienda;
     private Long idCategoria;
+
+
   
     public CreateAutoResponse(Long idAuto, Boolean disponibilidad) {
-    }
+    }  //Creo q esto toca borrarlo pq el constructor no hace nada — recibe los dos parámetros pero el cuerpo está vacío, no asigna ningún campo.
 
 }
 
