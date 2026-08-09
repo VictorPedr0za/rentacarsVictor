@@ -18,9 +18,13 @@ import java.util.List;
  *   HU-13 (Cardona) -> deleteAuto valida disponibilidad y borra en cascada
  */
 
+
 public interface AutoService {
   
-    // HU-11 (SUAREZ)
+    // HU-09 (Suarez)
+    java.util.List<CreateAutoResponse> buscarAutos (String ciudad, Long idCategoria);
+  
+    // HU-11 (Suarez)
     CreateAutoResponse actualizarDisponibilidad (Long id, UpdateAutoRequest request);
 
     CreateAutoResponse createAuto(CreateAutoRequest createAutoRequest) throws Exception;
@@ -41,7 +45,5 @@ public interface AutoService {
     //delete
     // HU-13 (Cardona): borra detalle y auto, valida disponibilidad
     void deleteAuto(Long id);
-
-
 
 }
