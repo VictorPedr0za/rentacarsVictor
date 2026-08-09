@@ -15,6 +15,7 @@ import java.util.List;
  *   HU-10 (Suarez) -> actualizarDetalles
  *   HU-11 (Suarez) -> actualizarDisponibilidad
  *   HU-12 (Cardona) -> getAutoById ahora retorna el detalle completo
+ *   HU-13 (Cardona) -> deleteAuto valida disponibilidad y borra en cascada
  */
 
 
@@ -42,6 +43,7 @@ public interface AutoService {
     UpdateAutoResponse updateAuto(Long id, UpdateAutoRequest updateAutoRequest) throws Exception;
 
     //delete
-    void deleteAuto(Long id) throws Exception;
+    // HU-13 (Cardona): borra detalle y auto, valida disponibilidad
+    void deleteAuto(Long id);
 
 }

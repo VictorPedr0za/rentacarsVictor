@@ -5,6 +5,7 @@ import com.rentacars.dto.request.CreateAutoRequest;
 import com.rentacars.dto.response.CreateAutoResponse;
 import com.rentacars.dto.response.UpdateAutoResponse;
 import com.rentacars.dto.request.UpdateAutoRequest;
+import com.rentacars.exception.BadRequestException;
 import com.rentacars.exception.ResourceNotFoundException;
 import com.rentacars.mapper.AutoMapper;
 import com.rentacars.model.Auto;
@@ -57,6 +58,49 @@ public class AutoServiceImpl implements AutoService {
         return createAutoResponseList;
 
     }
+  
+    //HU-09  
+  @Override
+    public List<CreateAutoResponse> buscarAutos(String ciudad, Long idCategoria) {
+        List<Auto> autos = autoRepository.buscarDisponibles(ciudad, idCategoria);
+
+        return autos.stream()
+                .map(auto -> {
+                    Detalle_auto detalle = detalleAutoRepository.findByIdAuto(auto.getIdAuto())
+                            .orElseThrow(() -> new ResourceNotFoundException(
+                                    "Detalle no encontrado para auto ID: " + auto.getIdAuto()));
+
+                    CreateAutoResponse response = new CreateAutoResponse();
+                    response.setIdAuto(auto.getIdAuto());
+                    response.setDisponibilidad(auto.getDisponibilidad());
+                    response.setModelo(detalle.getModelo());
+                    response.setMarca(detalle.getMarca());
+                    response.setPrecioDia(detalle.getPrecioDia());
+                    response.setOfertaPorcentaje(detalle.getOfertaPorcentaje());
+                    return response;
+                })
+                .toList();
+    }
+    
+    /*
+     * HU-11: Actualizar disponibilidad de un auto.
+     * Regla: si el auto no existe -> 404 Not Found.
+    */ 
+ 
+    //HU-11
+   @Override
+   @Transactional
+   public CreateAutoResponse actualizarDisponibilidad (Long id, UpdateAutoRequest request){
+       Auto auto = autoRepository.findById(id)
+               .orElseThrow(() -> new ResourceNotFoundException("Auto no encontrado con ID:"+ id));
+       auto.setDisponibilidad(request.getDisponibilidad());
+       Auto autoGuardado = autoRepository.save(auto);
+
+       CreateAutoResponse response = new CreateAutoResponse();
+       response.setIdAuto(autoGuardado.getIdAuto());
+       response.setDisponibilidad(autoGuardado.getDisponibilidad());
+       return response;
+   }
 
     // HU-12 (Cardona): obtiene el detalle completo del auto (autos + detalles_autos), con precio calculado
     @Override
@@ -159,69 +203,28 @@ public class AutoServiceImpl implements AutoService {
 
 
     //metodo para eliminar auto
+    // HU-13 (Cardona): borra detalle y auto en cascada
     @Override
-    public void deleteAuto(Long id) throws Exception {
+    @Transactional // une los dos deletes
+    public void deleteAuto(Long id) {
 
-        try {
+        //busca auto por id, 404 si no existe
+        Auto auto = autoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Auto no encontrado con id " + id));
 
-            //valida id no nulo
-            if (id == null){
-                throw new Exception("El id del auto es requerido");
-            }
-
-            //busca auto por id
-            Auto auto = autoRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("El ID:  " + id + " .No es valido"));
-
-            //elimina auto
-            autoRepository.delete(auto);
-
-        } catch (Exception e) {
-            throw e;
+        //bloquea borrado si esta alquilado
+        if (Boolean.FALSE.equals(auto.getDisponibilidad())) {
+            throw new BadRequestException("El auto esta alquilado, no se puede eliminar");
         }
+
+        //borra detalle antes del auto
+        detalleAutoRepository.findByIdAuto(id)
+                .ifPresent(detalleAutoRepository::delete);
+
+        //borra el auto al final
+        autoRepository.delete(auto);
     }
+
   
-  //HU-09
-    @Override
-    public List<CreateAutoResponse> buscarAutos(String ciudad, Long idCategoria) {
-        List<Auto> autos = autoRepository.buscarDisponibles(ciudad, idCategoria);
-
-        return autos.stream()
-                .map(auto -> {
-                    Detalle_auto detalle = detalleAutoRepository.findByIdAuto(auto.getIdAuto())
-                            .orElseThrow(() -> new ResourceNotFoundException(
-                                    "Detalle no encontrado para auto ID: " + auto.getIdAuto()));
-
-                    CreateAutoResponse response = new CreateAutoResponse();
-                    response.setIdAuto(auto.getIdAuto());
-                    response.setDisponibilidad(auto.getDisponibilidad());
-                    response.setModelo(detalle.getModelo());
-                    response.setMarca(detalle.getMarca());
-                    response.setPrecioDia(detalle.getPrecioDia());
-                    response.setOfertaPorcentaje(detalle.getOfertaPorcentaje());
-                    return response;
-                })
-                .toList();
-    }
-    
-    /*
-     * HU-11: Actualizar disponibilidad de un auto.
-     * Regla: si el auto no existe -> 404 Not Found.
-    */ 
- 
-    //HU-11
-   @Override
-   @Transactional
-   public CreateAutoResponse actualizarDisponibilidad (Long id, UpdateAutoRequest request){
-       Auto auto = autoRepository.findById(id)
-               .orElseThrow(() -> new ResourceNotFoundException("Auto no encontrado con ID:"+ id));
-       auto.setDisponibilidad(request.getDisponibilidad());
-       Auto autoGuardado = autoRepository.save(auto);
-
-       CreateAutoResponse response = new CreateAutoResponse();
-       response.setIdAuto(autoGuardado.getIdAuto());
-       response.setDisponibilidad(autoGuardado.getDisponibilidad());
-       return response;
-   }
 
 }

@@ -58,7 +58,7 @@ public class AutoMapper {
         return response;
     }
 
-    // HU-12 (cardona): combina Auto y Detalle_auto en un solo response, con el precio con oferta ya calculado
+    // HU-12 (cardona): combina Auto y detalle_auto en un solo response, con el precio con oferta ya calculado
     public static CreateDetalle_autoResponse entityToCreateDetalle_autoResponse(Auto auto, Detalle_auto detalle) {
 
         //la oferta puede ser null (auto sin oferta), se trata como 0
