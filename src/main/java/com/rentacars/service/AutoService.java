@@ -17,9 +17,13 @@ import java.util.List;
  *   HU-12 (Cardona) -> getAutoById ahora retorna el detalle completo
  */
 
+
 public interface AutoService {
   
-    // HU-11 (SUAREZ)
+    // HU-09 (Suarez)
+    java.util.List<CreateAutoResponse> buscarAutos (String ciudad, Long idCategoria);
+  
+    // HU-11 (Suarez)
     CreateAutoResponse actualizarDisponibilidad (Long id, UpdateAutoRequest request);
 
     CreateAutoResponse createAuto(CreateAutoRequest createAutoRequest) throws Exception;
@@ -39,7 +43,5 @@ public interface AutoService {
 
     //delete
     void deleteAuto(Long id) throws Exception;
-
-
 
 }
