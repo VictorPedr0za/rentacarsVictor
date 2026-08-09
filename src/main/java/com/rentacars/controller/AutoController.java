@@ -129,7 +129,7 @@ public class AutoController {
         autoService.deleteAuto(id);
 
         //devuelve 204 sin contenido
-        return ResponseEntity<>("Auto eliminado correctamente " + id).noContent().build();
+        return ResponseEntity.noContent().build();
       
     }
 
