@@ -10,8 +10,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-
 import com.rentacars.dto.request.UpdateAutoRequest;
 import com.rentacars.dto.response.CreateAutoResponse;
 import com.rentacars.service.AutoService;
@@ -19,7 +17,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 
 //importa el valid
 import jakarta.validation.Valid;
@@ -38,6 +35,14 @@ public class AutoController {
   
   
     private final AutoService autoService;
+  
+  // HU-09 (Suarez):
+    @GetMapping
+    public ResponseEntity<List<CreateAutoResponse>> buscarAutos(
+            @RequestParam(required = false) String ciudad,
+            @RequestParam(required = false, name = "id_categoria") Long idCategoria) {
+        return ResponseEntity.ok(autoService.buscarAutos(ciudad, idCategoria));
+    }
 
     //HU-11 (SUAREZ):
     @PatchMapping ("/{id}/disponibilidad")
@@ -47,12 +52,14 @@ public class AutoController {
         return ResponseEntity.ok(autoService.actualizarDisponibilidad(id, request));
     }
 
+    
+    /*
     @GetMapping("/ping")
     @Operation(summary = "verificar autos")
     public String ping() {
         return "pong";
     }
-
+    */
 
     //obtiene lista
     @GetMapping("/all")
@@ -123,6 +130,7 @@ public class AutoController {
                 "Auto eliminado correctamente",
                 HttpStatus.OK
         );
+
     }
 
 }
