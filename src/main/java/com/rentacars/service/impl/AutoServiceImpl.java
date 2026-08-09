@@ -156,27 +156,28 @@ public class AutoServiceImpl implements AutoService {
 
 
     //metodo para eliminar auto
+    // HU-13 (Cardona): borra detalle y auto en cascada
     @Override
-    public void deleteAuto(Long id) throws Exception {
+    @Transactional // une los dos deletes
+    public void deleteAuto(Long id) {
 
-        try {
+        //busca auto por id, 404 si no existe
+        Auto auto = autoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Auto no encontrado con id " + id));
 
-            //valida id no nulo
-            if (id == null){
-                throw new Exception("El id del auto es requerido");
-            }
-
-            //busca auto por id
-            Auto auto = autoRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("El ID:  " + id + " .No es valido"));
-
-            //elimina auto
-            autoRepository.delete(auto);
-
-        } catch (Exception e) {
-            throw e;
+        //bloquea borrado si esta alquilado
+        if (Boolean.FALSE.equals(auto.getDisponibilidad())) {
+            throw new BadRequestException("El auto esta alquilado, no se puede eliminar");
         }
+
+        //borra detalle antes del auto
+        detalleAutoRepository.findByIdAuto(id)
+                .ifPresent(detalleAutoRepository::delete);
+
+        //borra el auto al final
+        autoRepository.delete(auto);
     }
+
 
     /**
      * HU-11: Actualizar disponibilidad de un auto.

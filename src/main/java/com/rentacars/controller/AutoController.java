@@ -106,18 +106,16 @@ public class AutoController {
     }
 
     //elimina auto
-    @DeleteMapping("/delete/{id}")
+    // HU-13 (Cardona): ruta y codigo que pide el backlog
+    @DeleteMapping("/{id}")
     @Operation(summary = "eliminar auto")
-    public ResponseEntity<String> deleteAuto(@PathVariable Long id) throws Exception {
+    public ResponseEntity<Void> deleteAuto(@PathVariable Long id) {
 
         //llama service delete
         autoService.deleteAuto(id);
 
-        //retorna mensaje
-        return new ResponseEntity<>(
-                "Auto eliminado correctamente",
-                HttpStatus.OK
-        );
+        //devuelve 204 sin contenido
+        return ResponseEntity.noContent().build();
     }
 
 }
