@@ -1,19 +1,24 @@
 package com.rentacars.service.impl;
 
 import com.rentacars.dto.request.CreateAlquilerRequest;
+import com.rentacars.dto.request.UpdateAutoRequest;
 import com.rentacars.dto.response.CreateAlquilerResponse;
 import com.rentacars.dto.response.UpdateAlquilerResponse;
 import com.rentacars.dto.request.UpdateAlquilerRequest;
+import com.rentacars.exception.BadRequestException;
+import com.rentacars.exception.ResourceNotFoundException;
 import com.rentacars.mapper.AlquilerMapper;
 import com.rentacars.model.Alquiler;
 import com.rentacars.model.Auto;
 import com.rentacars.repository.AlquilerRepository;
 import com.rentacars.repository.AutoRepository;
 import com.rentacars.service.AlquilerService;
+import com.rentacars.service.AutoService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -22,6 +27,9 @@ public class AlquilerServiceImpl implements AlquilerService {
 
     private final AlquilerRepository alquilerRepository;
     private final AutoRepository autoRepository;
+
+    // llama actualizarDisponibilidad al cancelar
+    private final AutoService autoService;
 
     //obtiene lista alquileres
     @Override
@@ -191,7 +199,7 @@ public class AlquilerServiceImpl implements AlquilerService {
         }
     }
 
-
+    /*
     //metodo para eliminar alquiler
     @Override
     public void deleteAlquiler(Long id) throws Exception {
@@ -214,6 +222,31 @@ public class AlquilerServiceImpl implements AlquilerService {
             throw e;
         }
     }
+    */
 
+    //metodo para eliminar alquiler
+    // HU-22 (Cardona): cancela y libera el auto
+    @Override
+    @Transactional // agrupa borrado y liberar auto
+    public void deleteAlquiler(Long id) {
+
+        //busca alquiler por id, 404 si no existe
+        Alquiler alquiler = alquilerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Alquiler no encontrado con id " + id));
+
+        //bloquea cancelar si ya inicio
+        if (!alquiler.getFechaInicio().isAfter(LocalDate.now())) {
+            throw new BadRequestException("El alquiler ya inició, no se puede cancelar");
+        }
+
+        //borra el alquiler cancelado
+        alquilerRepository.delete(alquiler);
+
+        //arma datos para liberar auto
+        UpdateAutoRequest liberarAuto = new UpdateAutoRequest(true, null, null);
+
+        //libera el auto tras cancelar
+        autoService.actualizarDisponibilidad(alquiler.getIdAuto(), liberarAuto);
+    }
 
 }

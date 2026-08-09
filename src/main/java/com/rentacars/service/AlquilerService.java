@@ -7,6 +7,11 @@ import com.rentacars.dto.response.UpdateAlquilerResponse;
 
 import java.util.List;
 
+/**
+ * Interfaz Service del dominio Alquiler.
+ *   HU-22 (Cardona) -> deleteAlquiler ahora valida fecha y libera el auto
+ */
+
 public interface AlquilerService {
 
     CreateAlquilerResponse createAlquiler(CreateAlquilerRequest createAlquilerRequest) throws Exception;
@@ -20,8 +25,13 @@ public interface AlquilerService {
     //put
     UpdateAlquilerResponse updateAlquiler(Long id, UpdateAlquilerRequest updateAlquilerRequest) throws Exception;
 
+    /*
     //delete
     void deleteAlquiler(Long id) throws Exception;
+    */
 
+    //delete
+    // HU-22 (Cardona): cancela alquiler y libera el auto
+    void deleteAlquiler(Long id);
 
 }
