@@ -40,6 +40,7 @@ public interface TiendaService {
     // HU-04 (Corrales):
      void eliminarTienda(Long id);
 
-    // HU-05 (Corrales):
-    // CreateTiendaResponse obtenerTienda(Long id);
+     // HU-05 (Corrales)
+    CreateTiendaResponse getTiendaById(Long id);
+
 }

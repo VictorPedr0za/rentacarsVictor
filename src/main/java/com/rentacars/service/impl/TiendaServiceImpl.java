@@ -77,6 +77,13 @@ public class TiendaServiceImpl implements TiendaService {
         tiendaRepository.delete(tienda);
     }
 
+    @Override
+    public CreateTiendaResponse getTiendaById(Long id) {
+        Tienda tienda = tiendaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tienda no encontrada con ID: " + id));
+        return  tiendaMapper.toResponse(tienda);
+    }
+
     // ------------------------------------------------------------------
     // EJEMPLO DE COMO SE VE UNA HU QUE SI TIENE VALIDACION (para HU-02/HU-05):
     //

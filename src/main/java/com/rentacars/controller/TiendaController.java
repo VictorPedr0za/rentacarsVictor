@@ -70,13 +70,20 @@ public class TiendaController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminarTienda(@PathVariable Long id) {
         tiendaService.eliminarTienda(id);
-        return ResponseEntity.ok("Reserva eliminada exitosamente");
+        return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/{id}")
+    public CreateTiendaResponse getTiendaById(@PathVariable Long id) {
+        return tiendaService.getTiendaById(id);
     }
     // ------------------------------------------------------------------
     // PENDIENTES EN ESTE ARCHIVO:
     //
     //   HU-02 (Arango)   -> @PutMapping("/{id}")     actualizar tienda
     //   HU-03 (Arango)   -> @GetMapping              listar por ciudad (@RequestParam)
+    //
+    // LISTOS:
+    //
     //   HU-04 (Corrales) -> @DeleteMapping("/{id}")  eliminar -> 204 No Content
     //   HU-05 (Corrales) -> @GetMapping("/{id}")     consultar por id
     //
@@ -86,5 +93,6 @@ public class TiendaController {
     // Ejemplo de como recibir un parametro opcional (?ciudad=Bogota):
     //   public ResponseEntity<...> listar(
     //           @RequestParam(required = false) String ciudad) { ... }
+
     // ------------------------------------------------------------------
 }
