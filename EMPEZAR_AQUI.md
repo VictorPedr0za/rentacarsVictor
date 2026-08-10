@@ -44,7 +44,7 @@ create user cloud_usr with encrypted password 'cloud_pwd';
 create database alquilerautos_db with owner cloud_usr;
 ```
 
-**Paso 2 — Correr el script.** Conéctate a la base `alquiler_vehiculos` y ejecuta el archivo **`script_bd.sql`** que está en la raíz del proyecto. Crea las 6 tablas y mete 8 filas de prueba en cada una.
+**Paso 2 — Correr el script.** Conéctate a la base `alquilerautos_db` y ejecuta el archivo **`script_bd.sql`** que está en la raíz del proyecto. Crea las 6 tablas y mete 8 filas de prueba en cada una.
 
 > Este script es la **versión 2**. Cambió dos cosas respecto al que ya tenían: los ids pasaron de `SERIAL` a `BIGSERIAL` (para que calcen con `Long` en Java) y se agregó la columna `alquileres.estado`, que HU-24 y HU-21 necesitan. El script arranca con `DROP TABLE`, así que se puede correr encima del anterior sin problema.
 
