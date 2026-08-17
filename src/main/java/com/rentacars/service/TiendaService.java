@@ -2,6 +2,8 @@ package com.rentacars.service;
 
 import com.rentacars.dto.response.CreateTiendaResponse;
 import com.rentacars.dto.request.CreateTiendaRequest;
+import com.rentacars.model.Tienda;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * PLANTILLA DE INTERFAZ DE SERVICE -- copien este patron para las demas entidades.
@@ -31,6 +33,8 @@ public interface TiendaService {
     /** HU-01: registra una tienda nueva y devuelve la tienda creada con su id. */
     CreateTiendaResponse crearTienda(CreateTiendaRequest request);
 
+
+
     // HU-02 (Arango):
     // CreateTiendaResponse actualizarTienda(Long id, UpdateTiendaRequest request);
 
@@ -42,4 +46,5 @@ public interface TiendaService {
 
     // HU-05 (Corrales):
     // CreateTiendaResponse obtenerTienda(Long id);
+    Tienda obtenerTienda(Long id);
 }

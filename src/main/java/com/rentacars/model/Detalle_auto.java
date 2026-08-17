@@ -1,16 +1,10 @@
 package com.rentacars.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.math.BigDecimal;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+
+import lombok.*;
 
 /**
  * Tabla "detalles_autos".
@@ -50,6 +44,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Detalle_auto {
 
     @Id
@@ -81,6 +76,10 @@ public class Detalle_auto {
     @Column(name = "oferta_porcentaje", precision = 10, scale = 2)
     private BigDecimal ofertaPorcentaje;
 
-    @Column(name = "id_auto", nullable = false)
-    private Long idAuto;
+    @OneToOne
+    @JoinColumn(
+            name = "id_auto",
+            nullable = false
+    )
+    private Auto auto;
 }

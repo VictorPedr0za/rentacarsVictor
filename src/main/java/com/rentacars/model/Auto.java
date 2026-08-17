@@ -1,15 +1,7 @@
 package com.rentacars.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 
 /**
  * Tabla "autos".
@@ -37,6 +29,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+
 public class Auto {
 
     @Id
@@ -44,14 +38,21 @@ public class Auto {
     @Column(name = "id_auto")
     private Long idAuto;
 
-    // En la BD tiene DEFAULT TRUE, pero HU-08 debe ponerlo en true
-    // explicitamente al crear el auto.
     @Column(nullable = false)
     private Boolean disponibilidad;
 
-    @Column(name = "id_tienda", nullable = false)
-    private Long idTienda;
+    @ManyToOne
+    @JoinColumn(
+            name = "id_tienda",
+            nullable = false
+    )
+    private Tienda tienda;
 
-    @Column(name = "id_categoria", nullable = false)
-    private Long idCategoria;
+
+    @ManyToOne
+    @JoinColumn(
+            name = "id_categoria",
+            nullable = false
+    )
+    private Categoria categoria;
 }
