@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.rentacars.dto.request.UpdateClienteRequest;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
 @RestController
 @RequestMapping("/clientes")
 @RequiredArgsConstructor
@@ -26,4 +30,11 @@ public class ClienteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<CreateClienteResponse> actualizarCliente(
+            @PathVariable Long id,
+            @RequestBody UpdateClienteRequest request) {
+        CreateClienteResponse response = clienteService.actualizarCliente(id, request);
+        return ResponseEntity.ok(response);
+    }
 }
