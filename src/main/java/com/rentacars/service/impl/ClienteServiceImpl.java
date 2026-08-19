@@ -12,6 +12,10 @@ import com.rentacars.service.ClienteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import com.rentacars.dto.response.ClienteResponse;
+
 @Service
 @RequiredArgsConstructor
 public class ClienteServiceImpl implements ClienteService {
@@ -48,5 +52,12 @@ public class ClienteServiceImpl implements ClienteService {
 
         Cliente clienteActualizado = clienteRepository.save(cliente);
         return clienteMapper.toCreateResponse(clienteActualizado);
+    }
+
+    @Override
+    public List<ClienteResponse> listarClientes() {
+        return clienteRepository.findAll().stream()
+                .map(clienteMapper::toResponse)
+                .collect(Collectors.toList());
     }
 }

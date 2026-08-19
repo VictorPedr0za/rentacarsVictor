@@ -16,6 +16,10 @@ import com.rentacars.dto.request.UpdateClienteRequest;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import java.util.List;
+import com.rentacars.dto.response.ClienteResponse;
+
 @RestController
 @RequestMapping("/clientes")
 @RequiredArgsConstructor
@@ -36,5 +40,10 @@ public class ClienteController {
             @RequestBody UpdateClienteRequest request) {
         CreateClienteResponse response = clienteService.actualizarCliente(id, request);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ClienteResponse>> listarClientes() {
+        return ResponseEntity.ok(clienteService.listarClientes());
     }
 }
