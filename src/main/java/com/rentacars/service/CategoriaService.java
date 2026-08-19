@@ -23,10 +23,10 @@ public interface CategoriaService {
     List<CreateCategoriaResponse> listarCategorias();
 
     /*
-     * HU-08
-     *
-     * Permite comprobar que una categoría
-     * existe antes de registrar un auto.
+     * No es una HU propia del dominio Categoria: la usa AutoServiceImpl
+     * para validar que la categoria exista antes de registrar un auto
+     * (HU-08, Cifuentes) -- comentario corregido por Claude, decia "HU-08"
+     * por error ya que esa HU es de Auto, no de Categoria.
      */
     CreateCategoriaResponse obtenerCategoria(Long id);
 }

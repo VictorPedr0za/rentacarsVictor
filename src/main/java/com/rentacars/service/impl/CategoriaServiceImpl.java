@@ -103,8 +103,11 @@ public class CategoriaServiceImpl implements CategoriaService {
 
     /*
      * =====================================================
-     * HU-08
-     * OBTENER CATEGORÍA
+     * OBTENER CATEGORÍA POR ID
+     * No es una HU propia de Categoria: la usa AutoServiceImpl para
+     * validar que la categoria exista antes de registrar un auto
+     * (HU-08 de Cifuentes, dominio Auto) -- comentario corregido por
+     * Claude, decia "HU-08" por error.
      * =====================================================
      */
     @Override

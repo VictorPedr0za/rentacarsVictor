@@ -1,6 +1,7 @@
 package com.rentacars.controller;
 
 import com.rentacars.dto.request.CreateTiendaRequest;
+import com.rentacars.dto.request.UpdateTiendaRequest;
 import com.rentacars.dto.response.CreateTiendaResponse;
 import com.rentacars.service.TiendaService;
 import jakarta.validation.Valid;
@@ -8,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * PLANTILLA DE CONTROLLER -- copien este patron para las demas HU.
@@ -76,23 +79,34 @@ public class TiendaController {
     public CreateTiendaResponse getTiendaById(@PathVariable Long id) {
         return tiendaService.getTiendaById(id);
     }
-    // ------------------------------------------------------------------
-    // PENDIENTES EN ESTE ARCHIVO:
-    //
-    //   HU-02 (Arango)   -> @PutMapping("/{id}")     actualizar tienda
-    //   HU-03 (Arango)   -> @GetMapping              listar por ciudad (@RequestParam)
-    //
-    // LISTOS:
-    //
-    //   HU-04 (Corrales) -> @DeleteMapping("/{id}")  eliminar -> 204 No Content
-    //   HU-05 (Corrales) -> @GetMapping("/{id}")     consultar por id
-    //
-    // Ejemplo de como recibir el id de la URL:
-    //   public ResponseEntity<...> obtenerTienda(@PathVariable Long id) { ... }
-    //
-    // Ejemplo de como recibir un parametro opcional (?ciudad=Bogota):
-    //   public ResponseEntity<...> listar(
-    //           @RequestParam(required = false) String ciudad) { ... }
 
+    /**
+     * HU-02 (Arango): Actualizar tienda -- implementado por Claude.
+     *   PUT /tiendas/{id}
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<CreateTiendaResponse> actualizarTienda(
+            @PathVariable Long id,
+            @RequestBody UpdateTiendaRequest request) {
+        return ResponseEntity.ok(tiendaService.actualizarTienda(id, request));
+    }
+
+    /**
+     * HU-03 (Arango): Listar tiendas por ciudad -- implementado por Claude.
+     *   GET /tiendas?ciudad=Bogota
+     */
+    @GetMapping
+    public ResponseEntity<List<CreateTiendaResponse>> listarTiendas(
+            @RequestParam(required = false) String ciudad) {
+        return ResponseEntity.ok(tiendaService.listarTiendas(ciudad));
+    }
+
+    // ------------------------------------------------------------------
+    // LISTAS EN ESTE ARCHIVO:
+    //   HU-01 (Arango)   -> POST /tiendas             registrar
+    //   HU-02 (Arango)   -> PUT /tiendas/{id}          actualizar
+    //   HU-03 (Arango)   -> GET /tiendas?ciudad=       listar por ciudad
+    //   HU-04 (Corrales) -> DELETE /tiendas/{id}       eliminar -> 204 No Content
+    //   HU-05 (Corrales) -> GET /tiendas/{id}          consultar por id
     // ------------------------------------------------------------------
 }

@@ -12,6 +12,8 @@ import com.rentacars.model.Detalle_auto;
 import com.rentacars.repository.AutoRepository;
 import com.rentacars.repository.Detalle_autoRepository;
 import com.rentacars.service.AutoService;
+import com.rentacars.service.CategoriaService;
+import com.rentacars.service.TiendaService;
 import lombok.RequiredArgsConstructor;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,6 +37,10 @@ public class AutoServiceImpl implements AutoService {
     private final Detalle_autoRepository detalleAutoRepository;
     // valida FK antes de borrar
     private final AlquilerRepository alquilerRepository;
+    // HU-08 (Cifuentes): valida que tienda y categoria existan -- implementado por Claude
+    // Cambio v2: inyeccion directa en vez de FeignClient
+    private final TiendaService tiendaService;
+    private final CategoriaService categoriaService;
 
 
 
@@ -135,40 +141,29 @@ public class AutoServiceImpl implements AutoService {
         return AutoMapper.entityToCreateDetalle_autoResponse(auto, detalle);
     }
 
-    //crea auto
+    // HU-08 (Cifuentes): registrar auto con detalles -- implementado por Claude.
+    //
+    // Corregido: la version anterior solo guardaba la fila de "autos" (disponibilidad,
+    // idTienda, idCategoria) y nunca creaba el "detalles_autos" que pide la HU, ademas
+    // de no validar que la tienda/categoria existieran. Ahora:
+    //   1. Valida tienda y categoria (404 si no existen) inyectando los services.
+    //   2. Guarda primero en "autos" (disponibilidad = true siempre) para obtener el id_auto.
+    //   3. Guarda "detalles_autos" con ese id_auto.
+    // Todo en una sola transaccion: si falla el detalle, se revierte tambien el auto.
     @Override
+    @Transactional
     public CreateAutoResponse createAuto(CreateAutoRequest createAutoRequest) throws Exception {
 
-        try {
-            if (createAutoRequest == null) {
-                throw new Exception("El objeto CreateAutoRequest no puede ser nulo");
-            }
+        tiendaService.getTiendaById(createAutoRequest.getIdTienda());
+        categoriaService.obtenerCategoria(createAutoRequest.getIdCategoria());
 
-            if (createAutoRequest.getIdTienda() == null || createAutoRequest.getIdTienda() <= 0) {
-                throw new Exception("El idTienda es requerido y debe ser mayor a 0");
-            }
+        Auto auto = AutoMapper.createAutoRequestToEntity(createAutoRequest);
+        auto = autoRepository.save(auto);
 
-            if (createAutoRequest.getIdCategoria() == null || createAutoRequest.getIdCategoria() <= 0) {
-                throw new Exception("El idCategoria es requerido y debe ser mayor a 0");
-            }
+        Detalle_auto detalle = AutoMapper.createAutoRequestToDetalleEntity(createAutoRequest, auto.getIdAuto());
+        detalle = detalleAutoRepository.save(detalle);
 
-            if (createAutoRequest.getDisponibilidad() == null) {
-                throw new Exception("La disponibilidad es requerida");
-            }
-
-            Auto auto = Auto.builder()
-                    .disponibilidad(createAutoRequest.getDisponibilidad())
-                    .idTienda(createAutoRequest.getIdTienda())
-                    .idCategoria(createAutoRequest.getIdCategoria())
-                    .build();
-
-            auto = autoRepository.save(auto);
-
-            return AutoMapper.entityToCreateAutoResponse(auto);
-
-        } catch (Exception e) {
-            throw e;
-        }
+        return AutoMapper.entityToCreateAutoResponseConDetalle(auto, detalle);
     }
 
     //metodo para actualizar atributos

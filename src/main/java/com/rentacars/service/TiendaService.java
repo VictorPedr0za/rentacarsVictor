@@ -2,6 +2,9 @@ package com.rentacars.service;
 
 import com.rentacars.dto.response.CreateTiendaResponse;
 import com.rentacars.dto.request.CreateTiendaRequest;
+import com.rentacars.dto.request.UpdateTiendaRequest;
+
+import java.util.List;
 
 /**
  * PLANTILLA DE INTERFAZ DE SERVICE -- copien este patron para las demas entidades.
@@ -31,11 +34,11 @@ public interface TiendaService {
     /** HU-01: registra una tienda nueva y devuelve la tienda creada con su id. */
     CreateTiendaResponse crearTienda(CreateTiendaRequest request);
 
-    // HU-02 (Arango):
-    // CreateTiendaResponse actualizarTienda(Long id, UpdateTiendaRequest request);
+    // HU-02 (Arango): actualizar tienda -- implementado por Claude
+    CreateTiendaResponse actualizarTienda(Long id, UpdateTiendaRequest request);
 
-    // HU-03 (Arango):
-    // List<CreateTiendaResponse> listarTiendas(String ciudad);
+    // HU-03 (Arango): listar tiendas, filtrando opcionalmente por ciudad -- implementado por Claude
+    List<CreateTiendaResponse> listarTiendas(String ciudad);
 
     // HU-04 (Corrales):
      void eliminarTienda(Long id);

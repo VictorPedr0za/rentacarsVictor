@@ -1,6 +1,7 @@
 package com.rentacars.service.impl;
 
 import com.rentacars.dto.request.CreateTiendaRequest;
+import com.rentacars.dto.request.UpdateTiendaRequest;
 import com.rentacars.dto.response.CreateTiendaResponse;
 import com.rentacars.exception.ResourceNotFoundException;
 import com.rentacars.mapper.TiendaMapper;
@@ -10,6 +11,8 @@ import com.rentacars.service.TiendaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * PLANTILLA DE IMPLEMENTACION DE SERVICE -- copien este patron para las demas HU.
@@ -84,18 +87,52 @@ public class TiendaServiceImpl implements TiendaService {
         return  tiendaMapper.toResponse(tienda);
     }
 
-    // ------------------------------------------------------------------
-    // EJEMPLO DE COMO SE VE UNA HU QUE SI TIENE VALIDACION (para HU-02/HU-05):
-    //
-    // @Override
-    // public CreateTiendaResponse obtenerTienda(Long id) {
-    //     Tienda tienda = tiendaRepository.findById(id)
-    //             .orElseThrow(() -> new ResourceNotFoundException(
-    //                     "Tienda no encontrada con id " + id));
-    //     return tiendaMapper.toResponse(tienda);
-    // }
-    //
-    // orElseThrow: "si findById no encontro nada, lanza esta excepcion".
-    // El GlobalExceptionHandler la convierte en 404 Not Found.
-    // ------------------------------------------------------------------
+    /**
+     * HU-02 (Arango): Actualizar tienda -- implementado por Claude.
+     *
+     *   PUT /tiendas/{id}
+     *
+     * Reglas del backlog:
+     *   - Si la tienda no existe -> 404 Not Found.
+     *   - Actualizar solo los campos que lleguen en el body.
+     */
+    @Override
+    @Transactional
+    public CreateTiendaResponse actualizarTienda(Long id, UpdateTiendaRequest request) {
+        Tienda tienda = tiendaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tienda no encontrada con ID: " + id));
+
+        if (request.getNombre() != null) {
+            tienda.setNombre(request.getNombre());
+        }
+        if (request.getCiudad() != null) {
+            tienda.setCiudad(request.getCiudad());
+        }
+        if (request.getDireccion() != null) {
+            tienda.setDireccion(request.getDireccion());
+        }
+
+        Tienda tiendaActualizada = tiendaRepository.save(tienda);
+        return tiendaMapper.toResponse(tiendaActualizada);
+    }
+
+    /**
+     * HU-03 (Arango): Listar tiendas por ciudad -- implementado por Claude.
+     *
+     *   GET /tiendas?ciudad=Bogota
+     *
+     * Reglas del backlog:
+     *   - El parametro ciudad es opcional; si no se envia, retorna todas.
+     *   - Si se envia, filtra ignorando mayusculas/minusculas.
+     */
+    @Override
+    public List<CreateTiendaResponse> listarTiendas(String ciudad) {
+        List<Tienda> tiendas = (ciudad == null || ciudad.isBlank())
+                ? tiendaRepository.findAll()
+                : tiendaRepository.findByCiudadIgnoreCase(ciudad);
+
+        return tiendas.stream()
+                .map(tiendaMapper::toResponse)
+                .toList();
+    }
 }

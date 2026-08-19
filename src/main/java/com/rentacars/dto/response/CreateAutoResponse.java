@@ -37,11 +37,6 @@ public class CreateAutoResponse {
     private Long idTienda;
     private Long idCategoria;
 
-
-  
-    public CreateAutoResponse(Long idAuto, Boolean disponibilidad) {
-    }  //Creo q esto toca borrarlo pq el constructor no hace nada — recibe los dos parámetros pero el cuerpo está vacío, no asigna ningún campo.
-
 }
 
 

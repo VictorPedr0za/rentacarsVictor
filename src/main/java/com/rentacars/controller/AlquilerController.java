@@ -4,6 +4,7 @@ import com.rentacars.dto.request.CreateAlquilerRequest;
 import com.rentacars.dto.response.CreateAlquilerResponse;
 import com.rentacars.dto.request.UpdateAlquilerRequest;
 import com.rentacars.dto.response.UpdateAlquilerResponse;
+import com.rentacars.exception.BadRequestException;
 import com.rentacars.service.AlquilerService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -56,6 +57,42 @@ public class AlquilerController {
                 HttpStatus.CREATED
         );
 
+    }
+
+    /**
+     * HU-20 (Pedroza): Historial de alquileres del cliente -- implementado por Claude.
+     *   GET /alquileres?id_cliente=1
+     * Regla del backlog: id_cliente es obligatorio -> 400 si no se envia.
+     */
+    @GetMapping
+    @Operation(summary = "historial de alquileres de un cliente")
+    public ResponseEntity<List<CreateAlquilerResponse>> historialPorCliente(
+            @RequestParam(name = "id_cliente", required = false) Long idCliente) {
+
+        if (idCliente == null) {
+            throw new BadRequestException("El id_cliente es requerido");
+        }
+        return ResponseEntity.ok(alquilerService.historialPorCliente(idCliente));
+    }
+
+    /**
+     * HU-21 (Pedroza): Listar alquileres activos -- implementado por Claude.
+     *   GET /alquileres/activos
+     */
+    @GetMapping("/activos")
+    @Operation(summary = "listar alquileres activos")
+    public ResponseEntity<List<CreateAlquilerResponse>> listarActivos() {
+        return ResponseEntity.ok(alquilerService.listarActivos());
+    }
+
+    /**
+     * HU-24 (Corrales): Registrar devolucion de auto -- implementado por Claude.
+     *   PUT /alquileres/{id}/devolucion
+     */
+    @PutMapping("/{id}/devolucion")
+    @Operation(summary = "registrar devolucion de auto")
+    public ResponseEntity<CreateAlquilerResponse> registrarDevolucion(@PathVariable Long id) {
+        return ResponseEntity.ok(alquilerService.registrarDevolucion(id));
     }
 
     //hace post

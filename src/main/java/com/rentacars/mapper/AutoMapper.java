@@ -32,14 +32,44 @@ public class AutoMapper {
         return autos.stream().map(AutoMapper::entityToCreateAutoResponse).toList();
     }
 
-    //convierte request a entidad
+    // HU-08 (Cifuentes): construye la entidad Auto desde el request -- implementado por Claude.
+    // La disponibilidad NUNCA viene del cliente: la regla de negocio dice que
+    // siempre inicia en true al registrar el auto.
     public static Auto createAutoRequestToEntity(CreateAutoRequest createAutoRequest){
-
-        //construye entidad auto desde request
         return Auto.builder()
-                .disponibilidad(createAutoRequest.getDisponibilidad())
+                .disponibilidad(true)
                 .idTienda(createAutoRequest.getIdTienda())
                 .idCategoria(createAutoRequest.getIdCategoria())
+                .build();
+    }
+
+    // HU-08 (Cifuentes): construye la ficha comercial (detalles_autos) -- implementado por Claude.
+    // Se llama DESPUES de guardar el Auto, porque necesita el id_auto ya generado.
+    public static Detalle_auto createAutoRequestToDetalleEntity(CreateAutoRequest createAutoRequest, Long idAuto) {
+        Detalle_auto detalle = new Detalle_auto();
+        detalle.setModelo(createAutoRequest.getModelo());
+        detalle.setMarca(createAutoRequest.getMarca());
+        detalle.setAnio(createAutoRequest.getAnio());
+        detalle.setPlaca(createAutoRequest.getPlaca());
+        detalle.setPrecioDia(createAutoRequest.getPrecioDia());
+        detalle.setOfertaPorcentaje(createAutoRequest.getOfertaPorcentaje());
+        detalle.setImagen(createAutoRequest.getImagen());
+        detalle.setIdAuto(idAuto);
+        return detalle;
+    }
+
+    // HU-08 (Cifuentes): combina el Auto y el Detalle_auto recien creados en un solo response -- implementado por Claude.
+    public static CreateAutoResponse entityToCreateAutoResponseConDetalle(Auto auto, Detalle_auto detalle) {
+        return CreateAutoResponse.builder()
+                .idAuto(auto.getIdAuto())
+                .disponibilidad(auto.getDisponibilidad())
+                .idTienda(auto.getIdTienda())
+                .idCategoria(auto.getIdCategoria())
+                .modelo(detalle.getModelo())
+                .marca(detalle.getMarca())
+                .precioDia(detalle.getPrecioDia())
+                .ofertaPorcentaje(detalle.getOfertaPorcentaje())
+                .imagen(detalle.getImagen())
                 .build();
     }
 
