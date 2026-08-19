@@ -25,6 +25,8 @@ public interface AlquilerService {
     //put
     UpdateAlquilerResponse updateAlquiler(Long id, UpdateAlquilerRequest updateAlquilerRequest) throws Exception;
 
+    //HU-24
+    CreateAlquilerResponse registrarDevolucion(Long id);
     /*
     //delete
     void deleteAlquiler(Long id) throws Exception;
