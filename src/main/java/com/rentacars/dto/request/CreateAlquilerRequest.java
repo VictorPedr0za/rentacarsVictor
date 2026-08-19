@@ -9,7 +9,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -33,9 +32,7 @@ public class CreateAlquilerRequest {
     @NotNull(message = "La fecha de fin es requerida")
     private LocalDate fechaFin;
 
-    //valida precio total requerido
-    @NotNull(message = "El precio total es requerido")
-    private BigDecimal precioTotal;
+    // HU-18 (Pedroza): el precio_total no llega del cliente, lo calcula el servicio
 
     //valida ciudad de retirada requerida
     @NotBlank(message = "La ciudad de retirada es requerida")
@@ -47,9 +44,6 @@ public class CreateAlquilerRequest {
     @Size(max = 50, message = "La ciudad de devolucion soporta hasta 50 caracteres")
     private String ciudadDevolucion;
 
-    //valida estado requerido
-    @NotBlank(message = "El estado es requerido")
-    @Size(max = 20, message = "El estado soporta hasta 20 caracteres")
-    private String estado;
+    // HU-18 (Pedroza): el estado no llega del cliente, siempre inicia en ACTIVO
 
 }

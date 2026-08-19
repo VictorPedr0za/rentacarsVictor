@@ -122,4 +122,25 @@ public class AlquilerController {
         return ResponseEntity.noContent().build();
     }
 
+
+
+    // HU-20 (Pedroza): historial de alquileres de un cliente
+    @GetMapping
+    @Operation(summary = "historial de alquileres de un cliente")
+    public List<CreateAlquilerResponse> historialPorCliente(
+            @RequestParam("id_cliente") Long idCliente
+    ) {
+
+        //llama service con el id del cliente
+        return alquilerService.historialPorCliente(idCliente);
+    }
+
+    // HU-21 (Pedroza): lista los alquileres activos
+    @GetMapping("/activos")
+    @Operation(summary = "listar alquileres activos")
+    public List<CreateAlquilerResponse> listarActivos() {
+
+        //llama service, filtra activos
+        return alquilerService.listarActivos();
+    }
 }

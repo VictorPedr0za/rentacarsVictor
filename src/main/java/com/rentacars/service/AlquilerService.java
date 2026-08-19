@@ -34,4 +34,11 @@ public interface AlquilerService {
     // HU-22 (Cardona): cancela alquiler y libera el auto
     void deleteAlquiler(Long id);
 
+
+    // HU-20 (Pedroza): historial de alquileres de un cliente
+    List<CreateAlquilerResponse> historialPorCliente(Long idCliente);
+
+    // HU-21 (Pedroza): lista los alquileres activos
+    List<CreateAlquilerResponse> listarActivos();
+
 }

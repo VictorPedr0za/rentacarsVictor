@@ -37,15 +37,14 @@ public class AlquilerMapper {
     public static Alquiler createAlquilerRequestToEntity(CreateAlquilerRequest createAlquilerRequest){
 
         //construye entidad alquiler desde request
+        // HU-18 (Pedroza): precioTotal y estado no vienen en el request, se asignan en el service
         return Alquiler.builder()
                 .idCliente(createAlquilerRequest.getIdCliente())
                 .idAuto(createAlquilerRequest.getIdAuto())
                 .fechaInicio(createAlquilerRequest.getFechaInicio())
                 .fechaFin(createAlquilerRequest.getFechaFin())
-                .precioTotal(createAlquilerRequest.getPrecioTotal())
                 .ciudadRetirada(createAlquilerRequest.getCiudadRetirada())
                 .ciudadDevolucion(createAlquilerRequest.getCiudadDevolucion())
-                .estado(createAlquilerRequest.getEstado())
                 .build();
     }
 
