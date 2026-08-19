@@ -91,6 +91,12 @@ public class AlquilerController {
         );
     }
 
+    @PutMapping("/{id}/devolucion")
+    @Operation(summary = "registrar devolucion de auto")
+    public ResponseEntity<CreateAlquilerResponse> registrarDevolucion(@PathVariable Long id) {
+        return ResponseEntity.ok(alquilerService.registrarDevolucion(id));
+    }
+
     /*
     //elimina alquiler
     @DeleteMapping("/delete/{id}")
