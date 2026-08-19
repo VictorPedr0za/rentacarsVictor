@@ -198,6 +198,20 @@ public class AlquilerServiceImpl implements AlquilerService {
             throw e;
         }
     }
+    //HU-24
+    @Override
+    @Transactional
+    public CreateAlquilerResponse registrarDevolucion(Long id) {
+        Alquiler alquiler = alquilerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Alquiler no encontrado con id " + id));
+
+        alquiler.setEstado("CERRADO");
+        alquiler = alquilerRepository.save(alquiler);
+
+        autoService.actualizarDisponibilidad(alquiler.getIdAuto(), new UpdateAutoRequest(true, null, null));
+
+        return AlquilerMapper.entityToCreateAlquilerResponse(alquiler);
+    }
 
     /*
     //metodo para eliminar alquiler
