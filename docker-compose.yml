@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16
+    container_name: alquilerautos_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cloud_usr
+      POSTGRES_PASSWORD: cloud_pwd
+      POSTGRES_DB: alquilerautos_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d
+      - db_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: rentacars-container
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/alquilerautos_db
+      SPRING_DATASOURCE_USERNAME: cloud_usr
+      SPRING_DATASOURCE_PASSWORD: cloud_pwd
+
+  frontend:
+    build: ./frontend
+    container_name: rentacars-frontend
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "8081:80"
+
+volumes:
+  db_data:

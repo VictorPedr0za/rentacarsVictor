@@ -1,0 +1,8 @@
+.git
+.gitignore
+.mvn
+*.md
+target/*.original
+target/classes
+target/generated-sources
+target/maven-archiver
