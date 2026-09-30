@@ -3,9 +3,11 @@ package com.rentacars.service.impl;
 import com.rentacars.dto.request.CreateTiendaRequest;
 import com.rentacars.dto.request.UpdateTiendaRequest;
 import com.rentacars.dto.response.CreateTiendaResponse;
+import com.rentacars.exception.BadRequestException;
 import com.rentacars.exception.ResourceNotFoundException;
 import com.rentacars.mapper.TiendaMapper;
 import com.rentacars.model.Tienda;
+import com.rentacars.repository.AutoRepository;
 import com.rentacars.repository.TiendaRepository;
 import com.rentacars.service.TiendaService;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +46,8 @@ public class TiendaServiceImpl implements TiendaService {
     // "final" + @RequiredArgsConstructor = Spring los inyecta automaticamente.
     private final TiendaRepository tiendaRepository;
     private final TiendaMapper tiendaMapper;
+    // solo para validar que la tienda no tenga autos antes de borrarla
+    private final AutoRepository autoRepository;
 
     /**
      * HU-01: Registrar tienda.
@@ -131,6 +135,12 @@ public class TiendaServiceImpl implements TiendaService {
     public void eliminarTienda(Long id) {
         Tienda tienda = tiendaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tienda no encontrada con ID: " + id));
+
+        // la llave foranea impide borrarla si hay autos; se avisa con un 400 claro
+        if (autoRepository.existsByIdTienda(id)) {
+            throw new BadRequestException("La tienda tiene autos asociados, no se puede eliminar");
+        }
+
         tiendaRepository.delete(tienda);
     }
 

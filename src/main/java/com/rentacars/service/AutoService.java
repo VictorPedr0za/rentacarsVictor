@@ -12,6 +12,7 @@ import java.util.List;
 /**
  * Interfaz Service del dominio Auto.
  * Cada HU agrega UNA linea aqui. No borren ni reescriban las de los demas.
+ *   HU-08 (Cifuentes) -> createAuto (auto + detalles_autos)
  *   HU-09 (Suarez) -> buscarAutos
  *   HU-10 (Suarez) -> actualizarDetalles
  *   HU-11 (Suarez) -> actualizarDisponibilidad
@@ -32,7 +33,8 @@ public interface AutoService {
     CreateAutoResponse actualizarDetalles (Long id, UpdateDetalle_autoRequest updateDetalle_autoRequest);
 
 
-    CreateAutoResponse createAuto(CreateAutoRequest createAutoRequest) throws Exception;
+    // HU-08 (Cifuentes): registra auto + detalles en una sola transaccion
+    CreateAutoResponse createAuto(CreateAutoRequest createAutoRequest);
 
     //get all
     List<CreateAutoResponse> getAllAutos();
@@ -45,7 +47,7 @@ public interface AutoService {
     CreateDetalle_autoResponse getAutoById(Long id);
 
     //put
-    UpdateAutoResponse updateAuto(Long id, UpdateAutoRequest updateAutoRequest) throws Exception;
+    UpdateAutoResponse updateAuto(Long id, UpdateAutoRequest updateAutoRequest);
 
     //delete
     // HU-13 (Cardona): borra detalle y auto, valida disponibilidad

@@ -13,6 +13,9 @@ public interface AlquilerRepository extends JpaRepository<Alquiler, Long> {
     // valida si el auto tiene alquileres
     boolean existsByIdAuto(Long idAuto);
 
+    // no se puede borrar un cliente que tiene alquileres (llave foranea)
+    boolean existsByIdCliente(Long idCliente);
+
     // HU-20 (Pedroza): historial de alquileres de un cliente
     List<Alquiler> findByIdCliente(Long idCliente);
 

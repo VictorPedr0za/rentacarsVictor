@@ -10,13 +10,10 @@ import com.rentacars.exception.BadRequestException;
 import com.rentacars.exception.ResourceNotFoundException;
 import com.rentacars.mapper.AlquilerMapper;
 import com.rentacars.model.Alquiler;
-import com.rentacars.model.Auto;
 import com.rentacars.repository.AlquilerRepository;
-import com.rentacars.repository.AutoRepository;
-// HU-18 (Pedroza): repositorio de clientes, solo para validar que el cliente exista
-import com.rentacars.repository.ClienteRepository;
 import com.rentacars.service.AlquilerService;
 import com.rentacars.service.AutoService;
+import com.rentacars.service.ClienteService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,39 +28,41 @@ import java.util.List;
 @AllArgsConstructor
 public class AlquilerServiceImpl implements AlquilerService {
 
-    private final AlquilerRepository alquilerRepository;
-    private final AutoRepository autoRepository;
+    private static final String ESTADO_ACTIVO = "ACTIVO";
+    private static final String ESTADO_CERRADO = "CERRADO";
 
-    // llama actualizarDisponibilidad al cancelar
+    private final AlquilerRepository alquilerRepository;
+
+    // llama actualizarDisponibilidad / obtenerDetalle, antes eran FeignClient
     private final AutoService autoService;
 
-    // HU-18 (Pedroza): solo para validar que el id del cliente exista
-    private final ClienteRepository clienteRepository;
+    // HU-18 (Pedroza): valida que el cliente exista con clienteService.obtenerCliente(id)
+    private final ClienteService clienteService;
 
     //obtiene lista alquileres
     @Override
+    @Transactional(readOnly = true)
     public List<CreateAlquilerResponse> getAllAlquileres() {
 
         List<Alquiler> alquileres = alquilerRepository.findAll();
-        List<CreateAlquilerResponse> createAlquilerResponseList = AlquilerMapper.entityToListCreateAlquilerResponse(alquileres);
-        return createAlquilerResponseList;
+        return AlquilerMapper.entityToListCreateAlquilerResponse(alquileres);
 
     }
 
-    //obtiene alquiler segun id
+    //obtiene alquiler segun id, 404 si no existe
     @Override
+    @Transactional(readOnly = true)
     public CreateAlquilerResponse getAlquilerById(Long id) {
 
-        Alquiler alquiler = alquilerRepository.findById(id).orElseThrow(() -> new RuntimeException("El ID:  " + id + " .No es valido"));
-        CreateAlquilerResponse createAlquilerResponse = AlquilerMapper.entityToCreateAlquilerResponse(alquiler);
-        return createAlquilerResponse;
+        Alquiler alquiler = buscarAlquiler(id);
+        return AlquilerMapper.entityToCreateAlquilerResponse(alquiler);
     }
 
     //crea alquiler
     // HU-18 (Pedroza): valida cliente y auto, calcula precio y marca el auto ocupado
     @Override
     @Transactional // agrupa guardar el alquiler y actualizar la disponibilidad del auto
-    public CreateAlquilerResponse createAlquiler(CreateAlquilerRequest createAlquilerRequest) throws Exception {
+    public CreateAlquilerResponse createAlquiler(CreateAlquilerRequest createAlquilerRequest) {
 
         // valida que la fecha fin no sea anterior a la fecha inicio
         if (createAlquilerRequest.getFechaFin().isBefore(createAlquilerRequest.getFechaInicio())) {
@@ -75,13 +74,10 @@ public class AlquilerServiceImpl implements AlquilerService {
             throw new BadRequestException("La fechaInicio debe ser posterior a hoy");
         }
 
-        // valida que el cliente exista, antes esto era un ClienteFeignClient
-        if (!clienteRepository.existsById(createAlquilerRequest.getIdCliente())) {
-            throw new ResourceNotFoundException(
-                    "Cliente no encontrado con id " + createAlquilerRequest.getIdCliente());
-        }
+        // valida que el cliente exista (404), antes esto era un ClienteFeignClient
+        clienteService.obtenerCliente(createAlquilerRequest.getIdCliente());
 
-        // valida que el auto exista y trae su precio con oferta, antes un CatalogoFeignClient
+        // valida que el auto exista (404) y trae su precio con oferta, antes un CatalogoFeignClient
         CreateDetalle_autoResponse detalleAuto = autoService.getAutoById(createAlquilerRequest.getIdAuto());
 
         // el auto debe estar libre para poder alquilarlo
@@ -110,7 +106,7 @@ public class AlquilerServiceImpl implements AlquilerService {
                 .precioTotal(precioTotal)
                 .ciudadRetirada(createAlquilerRequest.getCiudadRetirada())
                 .ciudadDevolucion(createAlquilerRequest.getCiudadDevolucion())
-                .estado("ACTIVO")
+                .estado(ESTADO_ACTIVO)
                 .build();
 
         // guarda el alquiler ya con el precio calculado
@@ -125,125 +121,84 @@ public class AlquilerServiceImpl implements AlquilerService {
 
     //metodo para actualizar atributos
     @Override
-    public UpdateAlquilerResponse updateAlquiler(Long id, UpdateAlquilerRequest updateAlquilerRequest) throws Exception {
+    @Transactional
+    public UpdateAlquilerResponse updateAlquiler(Long id, UpdateAlquilerRequest updateAlquilerRequest) {
 
-        try {
+        //busca alquiler por id, 404 si no existe
+        Alquiler alquiler = buscarAlquiler(id);
 
-
-            // Validar id no nulo
-            if (id == null){
-                throw new Exception("El objeto Alquiler debe existir");
-            }
-
-
-            //valida request no nulo
-            if (updateAlquilerRequest == null){
-                throw new Exception("El objeto UpdateAlquilerRequest no puede ser nulo");
-            }
-
-            //busca alquiler por id
-            Alquiler alquiler = alquilerRepository.findById(id).orElseThrow(() -> new RuntimeException("Alquiler not found with id; " + id));
-
-            //actualiza cliente
-            if (updateAlquilerRequest.getIdCliente() != null) {
-                alquiler.setIdCliente(updateAlquilerRequest.getIdCliente());
-            }
-
-            //actualiza auto del alquiler
-            if (updateAlquilerRequest.getIdAuto() != null) {
-
-                //busca auto por id
-                Auto auto = autoRepository.findById(updateAlquilerRequest.getIdAuto())
-                        .orElseThrow(() -> new Exception(
-                                "No se encontro el auto con id " + updateAlquilerRequest.getIdAuto()
-                        ));
-
-                //asigna auto encontrado
-                alquiler.setIdAuto(auto.getIdAuto());
-            }
-
-            //actualiza fecha inicio
-            if (updateAlquilerRequest.getFechaInicio() != null) {
-                alquiler.setFechaInicio(updateAlquilerRequest.getFechaInicio());
-            }
-
-            //actualiza fecha fin
-            if (updateAlquilerRequest.getFechaFin() != null) {
-                alquiler.setFechaFin(updateAlquilerRequest.getFechaFin());
-            }
-
-            //actualiza precio total
-            if (updateAlquilerRequest.getPrecioTotal() != null) {
-                alquiler.setPrecioTotal(updateAlquilerRequest.getPrecioTotal());
-            }
-
-            //actualiza ciudad retirada
-            if (updateAlquilerRequest.getCiudadRetirada() != null) {
-                alquiler.setCiudadRetirada(updateAlquilerRequest.getCiudadRetirada());
-            }
-
-            //actualiza ciudad devolucion
-            if (updateAlquilerRequest.getCiudadDevolucion() != null) {
-                alquiler.setCiudadDevolucion(updateAlquilerRequest.getCiudadDevolucion());
-            }
-
-            //actualiza estado
-            if (updateAlquilerRequest.getEstado() != null) {
-                alquiler.setEstado(updateAlquilerRequest.getEstado());
-            }
-
-            //guarda entidad actualizada
-            alquiler = alquilerRepository.save(alquiler);
-
-            //convierte a update response
-            UpdateAlquilerResponse response = AlquilerMapper.entityToUpdateAlquilerResponse(alquiler);
-
-            //retorna dto
-            return response;
-
-        } catch (Exception e) {
-            throw e;
+        //actualiza cliente, que debe existir
+        if (updateAlquilerRequest.getIdCliente() != null) {
+            clienteService.obtenerCliente(updateAlquilerRequest.getIdCliente());
+            alquiler.setIdCliente(updateAlquilerRequest.getIdCliente());
         }
+
+        //actualiza auto del alquiler, que debe existir
+        if (updateAlquilerRequest.getIdAuto() != null) {
+            autoService.getAutoById(updateAlquilerRequest.getIdAuto());
+            alquiler.setIdAuto(updateAlquilerRequest.getIdAuto());
+        }
+
+        //actualiza fecha inicio
+        if (updateAlquilerRequest.getFechaInicio() != null) {
+            alquiler.setFechaInicio(updateAlquilerRequest.getFechaInicio());
+        }
+
+        //actualiza fecha fin
+        if (updateAlquilerRequest.getFechaFin() != null) {
+            alquiler.setFechaFin(updateAlquilerRequest.getFechaFin());
+        }
+
+        //la BD exige fecha_fin >= fecha_inicio; se valida para responder 400
+        if (alquiler.getFechaFin().isBefore(alquiler.getFechaInicio())) {
+            throw new BadRequestException("La fechaFin no puede ser anterior a la fechaInicio");
+        }
+
+        //actualiza precio total
+        if (updateAlquilerRequest.getPrecioTotal() != null) {
+            alquiler.setPrecioTotal(updateAlquilerRequest.getPrecioTotal());
+        }
+
+        //actualiza ciudad retirada
+        if (updateAlquilerRequest.getCiudadRetirada() != null) {
+            alquiler.setCiudadRetirada(updateAlquilerRequest.getCiudadRetirada());
+        }
+
+        //actualiza ciudad devolucion
+        if (updateAlquilerRequest.getCiudadDevolucion() != null) {
+            alquiler.setCiudadDevolucion(updateAlquilerRequest.getCiudadDevolucion());
+        }
+
+        //actualiza estado (el DTO ya limita los valores a ACTIVO o CERRADO)
+        if (updateAlquilerRequest.getEstado() != null) {
+            alquiler.setEstado(updateAlquilerRequest.getEstado());
+        }
+
+        //guarda entidad actualizada
+        alquiler = alquilerRepository.save(alquiler);
+
+        //convierte a update response
+        return AlquilerMapper.entityToUpdateAlquilerResponse(alquiler);
     }
+
     //HU-24
     @Override
     @Transactional
     public CreateAlquilerResponse registrarDevolucion(Long id) {
-        Alquiler alquiler = alquilerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Alquiler no encontrado con id " + id));
+        Alquiler alquiler = buscarAlquiler(id);
 
-        alquiler.setEstado("CERRADO");
+        // una devolucion ya registrada no se repite: volveria a marcar el auto como libre
+        if (ESTADO_CERRADO.equals(alquiler.getEstado())) {
+            throw new BadRequestException("El alquiler ya fue cerrado, la devolucion ya esta registrada");
+        }
+
+        alquiler.setEstado(ESTADO_CERRADO);
         alquiler = alquilerRepository.save(alquiler);
 
         autoService.actualizarDisponibilidad(alquiler.getIdAuto(), new UpdateAutoRequest(true, null, null));
 
         return AlquilerMapper.entityToCreateAlquilerResponse(alquiler);
     }
-
-    /*
-    //metodo para eliminar alquiler
-    @Override
-    public void deleteAlquiler(Long id) throws Exception {
-
-        try {
-
-            //valida id no nulo
-            if (id == null){
-                throw new Exception("El id del alquiler es requerido");
-            }
-
-            //busca alquiler por id
-            Alquiler alquiler = alquilerRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("El ID:  " + id + " .No es valido"));
-
-            //elimina alquiler
-            alquilerRepository.delete(alquiler);
-
-        } catch (Exception e) {
-            throw e;
-        }
-    }
-    */
 
     //metodo para eliminar alquiler
     // HU-22 (Cardona): cancela y libera el auto
@@ -252,8 +207,7 @@ public class AlquilerServiceImpl implements AlquilerService {
     public void deleteAlquiler(Long id) {
 
         //busca alquiler por id, 404 si no existe
-        Alquiler alquiler = alquilerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Alquiler no encontrado con id " + id));
+        Alquiler alquiler = buscarAlquiler(id);
 
         //bloquea cancelar si ya inicio
         if (!alquiler.getFechaInicio().isAfter(LocalDate.now())) {
@@ -272,6 +226,7 @@ public class AlquilerServiceImpl implements AlquilerService {
 
     // HU-20 (Pedroza): historial de alquileres de un cliente
     @Override
+    @Transactional(readOnly = true)
     public List<CreateAlquilerResponse> historialPorCliente(Long idCliente) {
 
         // busca los alquileres del cliente, lista vacia si no tiene ninguno
@@ -283,14 +238,21 @@ public class AlquilerServiceImpl implements AlquilerService {
 
     // HU-21 (Pedroza): alquileres activos, aun no vencidos y no cerrados
     @Override
+    @Transactional(readOnly = true)
     public List<CreateAlquilerResponse> listarActivos() {
 
         // filtra por fecha fin mayor o igual a hoy y estado ACTIVO
         List<Alquiler> alquileres =
-                alquilerRepository.findByFechaFinGreaterThanEqualAndEstado(LocalDate.now(), "ACTIVO");
+                alquilerRepository.findByFechaFinGreaterThanEqualAndEstado(LocalDate.now(), ESTADO_ACTIVO);
 
         // convierte la lista de entidades al dto de respuesta
         return AlquilerMapper.entityToListCreateAlquilerResponse(alquileres);
+    }
+
+    // busca un alquiler o lanza 404 (una sola vez, en vez de repetir el orElseThrow)
+    private Alquiler buscarAlquiler(Long id) {
+        return alquilerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Alquiler no encontrado con id " + id));
     }
 
 }

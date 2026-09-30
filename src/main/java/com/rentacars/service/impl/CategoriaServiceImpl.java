@@ -1,6 +1,7 @@
 package com.rentacars.service.impl;
 
 import com.rentacars.dto.request.CreateCategoriaRequest;
+import com.rentacars.dto.request.UpdateCategoriaRequest;
 import com.rentacars.dto.response.CreateCategoriaResponse;
 
 import com.rentacars.exception.BadRequestException;
@@ -9,12 +10,14 @@ import com.rentacars.exception.ResourceNotFoundException;
 import com.rentacars.mapper.CategoriaMapper;
 import com.rentacars.model.Categoria;
 
+import com.rentacars.repository.AutoRepository;
 import com.rentacars.repository.CategoriaRepository;
 import com.rentacars.service.CategoriaService;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,6 +25,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CategoriaServiceImpl implements CategoriaService {
     private final CategoriaRepository categoriaRepository;
+    // solo para validar que no queden autos con esta categoria al eliminarla
+    private final AutoRepository autoRepository;
     /*
      * =====================================================
      * HU-06
@@ -133,5 +138,61 @@ public class CategoriaServiceImpl implements CategoriaService {
                 .entityToCreateCategoriaResponse(
                         categoria
                 );
+    }
+
+
+    /*
+     * =====================================================
+     * ACTUALIZAR CATEGORÍA
+     * Solo cambia los campos que lleguen en el body.
+     * =====================================================
+     */
+    @Override
+    @Transactional
+    public CreateCategoriaResponse actualizarCategoria(
+            Long id, UpdateCategoriaRequest request) {
+
+        Categoria categoria = categoriaRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "No existe la categoria con id " + id));
+
+        if (request.getNombre() != null) {
+            // el nombre no puede coincidir con el de OTRA categoria
+            if (categoriaRepository.existsByNombreAndIdCategoriaNot(request.getNombre(), id)) {
+                throw new BadRequestException("Ya existe una categoria con ese nombre");
+            }
+            categoria.setNombre(request.getNombre());
+        }
+        if (request.getDescripcion() != null) {
+            categoria.setDescripcion(request.getDescripcion());
+        }
+
+        return CategoriaMapper.entityToCreateCategoriaResponse(
+                categoriaRepository.save(categoria));
+    }
+
+
+    /*
+     * =====================================================
+     * ELIMINAR CATEGORÍA
+     * =====================================================
+     */
+    @Override
+    @Transactional
+    public void eliminarCategoria(Long id) {
+
+        Categoria categoria = categoriaRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "No existe la categoria con id " + id));
+
+        // la llave foranea impide borrarla si hay autos; se avisa con un 400 claro
+        if (autoRepository.existsByIdCategoria(id)) {
+            throw new BadRequestException(
+                    "La categoria tiene autos asociados, no se puede eliminar");
+        }
+
+        categoriaRepository.delete(categoria);
     }
 }

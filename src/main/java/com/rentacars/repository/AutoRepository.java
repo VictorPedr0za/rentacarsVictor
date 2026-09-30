@@ -20,4 +20,10 @@ public interface AutoRepository extends JpaRepository<Auto, Long> {
         """)
     List<Auto> buscarDisponibles(@Param("ciudad") String ciudad, @Param("idCategoria") Long idCategoria);
 
+    // HU-04: no se puede borrar una tienda que aun tiene autos (llave foranea)
+    boolean existsByIdTienda(Long idTienda);
+
+    // no se puede borrar una categoria que aun tiene autos (llave foranea)
+    boolean existsByIdCategoria(Long idCategoria);
+
 }

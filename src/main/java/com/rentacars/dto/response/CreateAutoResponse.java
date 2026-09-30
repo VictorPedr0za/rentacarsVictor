@@ -10,8 +10,12 @@ import lombok.Setter;
 import java.math.BigDecimal;
 
 /**
+ * HU-08 (Cifuentes) -> idAuto, disponibilidad, idTienda, idCategoria, detalles
  * HU-09 (Suarez) -> modelo, marca, precioDia, ofertaPorcentaje
  * HU-11 (Suarez) -> idAuto, disponibilidad
+ *
+ * Los campos en null no salen en el JSON (non_null), asi que cada HU
+ * solo devuelve los que llena.
  */
 @Getter
 @Setter
@@ -29,20 +33,13 @@ public class CreateAutoResponse {
     //HU-10 (Suarez)
     private String imagen;
 
-
-
     //HU-11(Suarez)
     private Long idAuto;
     private Boolean disponibilidad;
     private Long idTienda;
     private Long idCategoria;
 
-
-  
-    public CreateAutoResponse(Long idAuto, Boolean disponibilidad) {
-    }  //Creo q esto toca borrarlo pq el constructor no hace nada — recibe los dos parámetros pero el cuerpo está vacío, no asigna ningún campo.
+    //HU-08 (Cifuentes): ficha comercial guardada en detalles_autos
+    private CreateDetalle_autoResponse detalles;
 
 }
-
-
-

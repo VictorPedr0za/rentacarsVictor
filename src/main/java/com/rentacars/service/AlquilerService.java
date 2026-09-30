@@ -14,7 +14,8 @@ import java.util.List;
 
 public interface AlquilerService {
 
-    CreateAlquilerResponse createAlquiler(CreateAlquilerRequest createAlquilerRequest) throws Exception;
+    // HU-18 (Pedroza): crea el alquiler, calcula el precio y marca el auto ocupado
+    CreateAlquilerResponse createAlquiler(CreateAlquilerRequest createAlquilerRequest);
 
     //get all
     List<CreateAlquilerResponse> getAllAlquileres();
@@ -23,14 +24,10 @@ public interface AlquilerService {
     CreateAlquilerResponse getAlquilerById(Long id);
 
     //put
-    UpdateAlquilerResponse updateAlquiler(Long id, UpdateAlquilerRequest updateAlquilerRequest) throws Exception;
+    UpdateAlquilerResponse updateAlquiler(Long id, UpdateAlquilerRequest updateAlquilerRequest);
 
     //HU-24
     CreateAlquilerResponse registrarDevolucion(Long id);
-    /*
-    //delete
-    void deleteAlquiler(Long id) throws Exception;
-    */
 
     //delete
     // HU-22 (Cardona): cancela alquiler y libera el auto

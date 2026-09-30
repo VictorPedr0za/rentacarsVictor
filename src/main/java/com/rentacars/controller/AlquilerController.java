@@ -51,19 +51,17 @@ public class AlquilerController {
 
         CreateAlquilerResponse alquilerResponse = alquilerService.getAlquilerById(id);
 
-        return new ResponseEntity<>(
-                alquilerResponse,
-                HttpStatus.CREATED
-        );
+        return ResponseEntity.ok(alquilerResponse);
 
     }
 
     //hace post
-    @PostMapping("/create")
+    // HU-18 (Pedroza): ruta del backlog POST /alquileres; "/create" se conserva porque el frontend aun la usa
+    @PostMapping({"", "/create"})
     @Operation(summary = "crear alquiler")
     public ResponseEntity<CreateAlquilerResponse> createAlquiler(
             @Valid @RequestBody CreateAlquilerRequest createAlquilerRequest
-    ) throws Exception {
+    ) {
 
         CreateAlquilerResponse alquilerCreated = alquilerService.createAlquiler(createAlquilerRequest);
 
@@ -79,16 +77,13 @@ public class AlquilerController {
     public ResponseEntity<UpdateAlquilerResponse> updateAlquiler(
             @PathVariable Long id,
             @Valid @RequestBody UpdateAlquilerRequest updateAlquilerRequest
-    ) throws Exception {
+    ) {
 
         //llama update en service
         UpdateAlquilerResponse alquilerUpdated = alquilerService.updateAlquiler(id, updateAlquilerRequest);
 
         //retorna response
-        return new ResponseEntity<>(
-                alquilerUpdated,
-                HttpStatus.CREATED
-        );
+        return ResponseEntity.ok(alquilerUpdated);
     }
 
     @PutMapping("/{id}/devolucion")
@@ -96,24 +91,6 @@ public class AlquilerController {
     public ResponseEntity<CreateAlquilerResponse> registrarDevolucion(@PathVariable Long id) {
         return ResponseEntity.ok(alquilerService.registrarDevolucion(id));
     }
-
-    /*
-    //elimina alquiler
-    @DeleteMapping("/delete/{id}")
-    @Operation(summary = "eliminar alquiler")
-    public ResponseEntity<String> deleteAlquiler(@PathVariable Long id) throws Exception {
-
-        //llama service delete
-        alquilerService.deleteAlquiler(id);
-
-        //retorna mensaje
-        return new ResponseEntity<>(
-                "Alquiler eliminado correctamente",
-                HttpStatus.OK
-        );
-    }
-
-    */
 
     //elimina alquiler
     // HU-22 (Cardona): ruta y codigo del backlog

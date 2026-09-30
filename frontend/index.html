@@ -3,162 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
 <title>AutoRent · Consola de operaciones</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#12151A;
-    --surface:#1B1F26;
-    --surface-alt:#232833;
-    --border:#2C323D;
-    --text:#E9E7DF;
-    --text-muted:#97A0AC;
-    --accent:#F2B705;
-    --accent-ink:#14161B;
-    --success:#4FAE7D;
-    --success-bg:rgba(79,174,125,.14);
-    --danger:#E2574C;
-    --danger-bg:rgba(226,87,76,.14);
-    --radius:10px;
-    --font-display:'Oswald',sans-serif;
-    --font-body:'Inter',system-ui,sans-serif;
-  }
-  *{box-sizing:border-box;}
-  @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
-  html,body{margin:0;padding:0;}
-  body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:var(--font-body);
-    font-size:15px;
-    line-height:1.5;
-    min-height:100vh;
-  }
-  h1,h2{font-family:var(--font-display);font-weight:500;margin:0;}
-  p{margin:0;}
-  button{font-family:var(--font-body);cursor:pointer;}
-  input,select{font-family:var(--font-body);}
-
-  .shell{display:flex;min-height:100vh;}
-
-  /* ---------- sidebar ---------- */
-  .sidebar{
-    width:270px;flex-shrink:0;background:var(--surface);
-    border-right:1px solid var(--border);
-    padding:28px 22px;display:flex;flex-direction:column;gap:32px;
-    position:sticky;top:0;height:100vh;overflow-y:auto;
-  }
-  .brand{display:flex;align-items:center;gap:12px;}
-  .brand__mark{
-    width:38px;height:38px;border-radius:8px;background:var(--accent);
-    color:var(--accent-ink);font-family:var(--font-display);font-weight:600;
-    display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;
-  }
-  .brand__name{font-family:var(--font-display);font-size:19px;font-weight:500;}
-  .brand__sub{font-size:12.5px;color:var(--text-muted);}
-
-  .nav{display:flex;flex-direction:column;gap:4px;}
-  .nav-btn{
-    all:unset;cursor:pointer;padding:10px 12px;border-radius:8px;
-    color:var(--text-muted);font-weight:600;font-size:14.5px;
-    border-left:3px solid transparent;
-  }
-  .nav-btn:hover{color:var(--text);}
-  .nav-btn.active{background:var(--surface-alt);color:var(--text);border-left-color:var(--accent);}
-  .nav-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-
-  .sidebar__footer{margin-top:auto;display:flex;flex-direction:column;gap:10px;}
-  .status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);}
-  .status__dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);flex-shrink:0;}
-  .status--ok .status__dot{background:var(--success);}
-  .status--err .status__dot{background:var(--danger);}
-  .hint{font-size:12.5px;color:var(--text-muted);}
-
-  /* ---------- form fields (shared) ---------- */
-  .field{display:flex;flex-direction:column;gap:6px;}
-  .field label{font-size:13px;color:var(--text-muted);font-weight:600;}
-  .field input{
-    background:var(--bg);border:1px solid var(--border);border-radius:8px;
-    padding:9px 11px;color:var(--text);font-size:14.5px;width:100%;
-  }
-  .field input:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
-
-  .btn{
-    border-radius:8px;padding:10px 18px;font-size:14.5px;font-weight:600;border:1px solid transparent;
-  }
-  .btn-primary{background:var(--accent);color:var(--accent-ink);}
-  .btn-primary:hover{filter:brightness(1.06);}
-  .btn-primary:disabled{opacity:.55;cursor:not-allowed;}
-  .btn-ghost{background:transparent;border-color:var(--border);color:var(--text);}
-  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
-  .btn-ghost:disabled{opacity:.4;cursor:not-allowed;border-color:var(--border);color:var(--text-muted);}
-
-  /* ---------- content / views ---------- */
-  .content{flex:1;padding:44px 52px;max-width:1120px;}
-  .view{display:none;}
-  .view.active{display:block;}
-  .view__header{margin-bottom:22px;display:flex;flex-direction:column;gap:6px;}
-  .view__header--row{flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
-  .view__desc{color:var(--text-muted);font-size:14.5px;}
-
-  .banner{padding:12px 14px;border-radius:8px;font-size:14px;margin-bottom:18px;border:1px solid transparent;}
-  .banner--ok{background:var(--success-bg);color:var(--success);border-color:var(--success);}
-  .banner--err{background:var(--danger-bg);color:var(--danger);border-color:var(--danger);}
-
-  .empty{border:1px dashed var(--border);border-radius:var(--radius);padding:34px;text-align:center;color:var(--text-muted);}
-
-  /* catálogo */
-  .filtro-form{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;margin-bottom:6px;}
-  .filtro-form .field{width:200px;}
-  .filtro-form__actions{display:flex;gap:10px;}
-  .autos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;margin-top:18px;}
-  .auto-card{
-    border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;
-    background:var(--surface);display:flex;flex-direction:column;transition:border-color .15s ease;
-  }
-  .auto-card:hover{border-color:var(--accent);}
-  .auto-card__media{aspect-ratio:16/10;background:var(--surface-alt);overflow:hidden;}
-  .auto-card__media img{width:100%;height:100%;object-fit:cover;display:block;}
-  .auto-card__body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:9px;}
-  .auto-card__title{font-family:var(--font-display);font-size:18px;font-weight:500;}
-  .auto-card__meta{font-size:13px;color:var(--text-muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-  .badge{font-size:11.5px;padding:3px 9px;border-radius:999px;font-weight:600;white-space:nowrap;}
-  .badge--ok{background:var(--success-bg);color:var(--success);}
-  .badge--no{background:var(--danger-bg);color:var(--danger);}
-  .badge--oferta{background:var(--accent);color:var(--accent-ink);}
-  .price-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
-  .price{font-family:var(--font-display);font-size:20px;color:var(--accent);}
-  .price small{font-family:var(--font-body);font-size:12px;color:var(--text-muted);font-weight:400;}
-  .price-old{font-size:13px;color:var(--text-muted);text-decoration:line-through;}
-
-  /* nuevo alquiler */
-  .alquiler-form{
-    display:grid;grid-template-columns:repeat(2,minmax(200px,1fr));gap:16px 20px;max-width:560px;
-  }
-  .alquiler-form .btn{grid-column:1 / -1;justify-self:start;margin-top:6px;}
-
-  /* activos */
-  .table{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px;}
-  .table th{
-    text-align:left;font-weight:600;color:var(--text-muted);font-size:12.5px;
-    padding:10px 12px;border-bottom:1px solid var(--border);
-  }
-  .table td{padding:11px 12px;border-bottom:1px solid var(--border);}
-  .table tbody tr:hover td{background:var(--surface-alt);}
-
-  @media (max-width: 860px){
-    .shell{flex-direction:column;}
-    .sidebar{width:100%;height:auto;position:relative;}
-    .content{padding:26px;}
-    .alquiler-form{grid-template-columns:1fr;max-width:none;}
-  }
-</style>
+<link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+<a class="skip-link" href="#main">Saltar al contenido</a>
+<div id="progress" class="progress" aria-hidden="true"></div>
+
 <div class="shell">
 
+  <!-- ================= BARRA LATERAL ================= -->
   <aside class="sidebar">
     <div class="brand">
       <div class="brand__mark">AR</div>
@@ -168,10 +26,13 @@
       </div>
     </div>
 
-    <nav class="nav">
-      <button class="nav-btn active" data-view="catalogo">Catálogo de autos</button>
-      <button class="nav-btn" data-view="nuevo">Nuevo alquiler</button>
-      <button class="nav-btn" data-view="activos">Alquileres activos</button>
+    <nav class="nav" aria-label="Secciones">
+      <a class="nav-link" href="#/panel" data-view="panel"><span data-icon="grid"></span>Panel</a>
+      <a class="nav-link" href="#/catalogo" data-view="catalogo"><span data-icon="car"></span>Catálogo de autos</a>
+      <a class="nav-link" href="#/alquileres" data-view="alquileres"><span data-icon="key"></span>Alquileres</a>
+      <a class="nav-link" href="#/clientes" data-view="clientes"><span data-icon="users"></span>Clientes</a>
+      <a class="nav-link" href="#/tiendas" data-view="tiendas"><span data-icon="pin"></span>Tiendas</a>
+      <a class="nav-link" href="#/categorias" data-view="categorias"><span data-icon="tag"></span>Categorías</a>
     </nav>
 
     <div class="sidebar__footer">
@@ -181,333 +42,187 @@
       </div>
       <div class="field">
         <label for="api-base-input">Dirección del backend</label>
-        <input id="api-base-input" type="text" value="http://localhost:8080" spellcheck="false" autocomplete="off">
+        <input id="api-base-input" type="text" spellcheck="false" autocomplete="off" placeholder="http://localhost:8080">
       </div>
-      <p class="hint">Se aplica en la próxima consulta. Si este archivo se sirve desde el mismo backend (recomendado), dejá el campo vacío.</p>
+      <p class="hint">Se guarda en este navegador. Si esta página se sirve desde el mismo backend, dejá el campo vacío.</p>
     </div>
   </aside>
 
-  <main class="content">
+  <main id="main" class="content">
 
-    <!-- ================= CATÁLOGO ================= -->
-    <section id="view-catalogo" class="view active">
-      <header class="view__header">
-        <h1>Catálogo de autos</h1>
-        <p class="view__desc">Consultá el inventario completo o filtrá por ciudad y categoría.</p>
-      </header>
+    <div id="conn-banner" class="banner banner--err" role="alert" hidden></div>
 
-      <form id="filtro-form" class="filtro-form">
-        <div class="field">
-          <label for="f-ciudad">Ciudad</label>
-          <input id="f-ciudad" type="text" placeholder="Ej: Cali">
-        </div>
-        <div class="field">
-          <label for="f-categoria">Categoría</label>
-          <input id="f-categoria" type="number" min="1" max="8" placeholder="1–8">
-        </div>
-        <div class="filtro-form__actions">
-          <button type="submit" class="btn btn-primary">Buscar</button>
-          <button type="button" id="btn-ver-todo" class="btn btn-ghost">Ver todo</button>
-        </div>
-      </form>
-      <p class="hint">Categorías: 1 Económico · 2 Sedán · 3 SUV · 4 Camioneta · 5 Lujo · 6 Eléctrico · 7 Deportivo · 8 Minivan</p>
-
-      <div id="autos-banner" class="banner" role="status" hidden></div>
-      <div id="autos-grid" class="autos-grid"></div>
-      <div id="autos-empty" class="empty" hidden>
-        <p>No encontramos autos con esos filtros. Probá con otra ciudad o categoría.</p>
-      </div>
-    </section>
-
-    <!-- ================= NUEVO ALQUILER ================= -->
-    <section id="view-nuevo" class="view">
-      <header class="view__header">
-        <h1>Nuevo alquiler</h1>
-        <p class="view__desc">Registrá el retiro de un auto para un cliente existente.</p>
-      </header>
-
-      <div id="alquiler-banner" class="banner" role="status" hidden></div>
-
-      <form id="alquiler-form" class="alquiler-form">
-        <div class="field">
-          <label for="n-id-cliente">ID del cliente</label>
-          <input id="n-id-cliente" type="number" min="1" required>
-        </div>
-        <div class="field">
-          <label for="n-id-auto">ID del auto</label>
-          <input id="n-id-auto" type="number" min="1" required>
-        </div>
-        <div class="field">
-          <label for="n-fecha-inicio">Fecha de retiro</label>
-          <input id="n-fecha-inicio" type="date" required>
-        </div>
-        <div class="field">
-          <label for="n-fecha-fin">Fecha de devolución</label>
-          <input id="n-fecha-fin" type="date" required>
-        </div>
-        <div class="field">
-          <label for="n-ciudad-retirada">Ciudad de retiro</label>
-          <input id="n-ciudad-retirada" type="text" required>
-        </div>
-        <div class="field">
-          <label for="n-ciudad-devolucion">Ciudad de devolución</label>
-          <input id="n-ciudad-devolucion" type="text" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Registrar alquiler</button>
-      </form>
-      <p class="hint" style="margin-top:14px;">Datos del seed: clientes y autos con ID del 1 al 8.</p>
-    </section>
-
-    <!-- ================= ACTIVOS ================= -->
-    <section id="view-activos" class="view">
+    <!-- ================= PANEL ================= -->
+    <section id="view-panel" class="view">
       <header class="view__header view__header--row">
         <div>
-          <h1>Alquileres activos</h1>
-          <p class="view__desc">Autos que siguen fuera, sin devolver.</p>
+          <h1>Panel</h1>
+          <p class="view__desc">Resumen de la operación: flota, alquileres y próximas devoluciones.</p>
         </div>
-        <button id="btn-refrescar" class="btn btn-ghost">Actualizar</button>
+        <div class="actions">
+          <button class="btn btn-primary" data-action="new-alquiler"><span data-icon="plus"></span>Nuevo alquiler</button>
+          <button class="btn btn-ghost" data-action="new-auto"><span data-icon="car"></span>Registrar auto</button>
+          <button class="btn btn-ghost" data-action="new-cliente"><span data-icon="users"></span>Registrar cliente</button>
+        </div>
       </header>
 
-      <div id="activos-banner" class="banner" role="status" hidden></div>
+      <div id="kpis" class="kpis"></div>
 
-      <table id="activos-table" class="table">
-        <thead>
-          <tr>
-            <th>Alquiler</th><th>Cliente</th><th>Auto</th><th>Fechas</th>
-            <th>Ruta</th><th>Total</th><th>Estado</th>
-          </tr>
-        </thead>
-        <tbody id="activos-body"></tbody>
-      </table>
-      <div id="activos-empty" class="empty" hidden>
-        <p>No hay alquileres activos en este momento.</p>
+      <div class="grid-2">
+        <section class="card">
+          <h2 class="card__title">Próximas devoluciones</h2>
+          <div id="panel-proximas"></div>
+        </section>
+        <section class="card">
+          <h2 class="card__title">Ofertas vigentes</h2>
+          <div id="panel-ofertas"></div>
+        </section>
       </div>
+    </section>
+
+    <!-- ================= CATÁLOGO ================= -->
+    <section id="view-catalogo" class="view">
+      <header class="view__header view__header--row">
+        <div>
+          <h1>Catálogo de autos</h1>
+          <p class="view__desc">Consultá la flota, filtrá por ciudad y categoría, y administrá cada vehículo.</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" data-action="new-auto"><span data-icon="plus"></span>Registrar auto</button>
+        </div>
+      </header>
+
+      <form id="cat-filtros" class="toolbar" autocomplete="off">
+        <div class="field">
+          <label for="cat-q">Buscar</label>
+          <input id="cat-q" type="search" placeholder="Marca o modelo">
+        </div>
+        <div class="field">
+          <label for="cat-ciudad">Ciudad</label>
+          <select id="cat-ciudad"></select>
+        </div>
+        <div class="field">
+          <label for="cat-categoria">Categoría</label>
+          <select id="cat-categoria"></select>
+        </div>
+        <div class="field">
+          <label for="cat-orden">Ordenar por</label>
+          <select id="cat-orden">
+            <option value="">Más recientes</option>
+            <option value="precio-asc">Precio: menor a mayor</option>
+            <option value="precio-desc">Precio: mayor a menor</option>
+            <option value="marca">Marca (A–Z)</option>
+          </select>
+        </div>
+        <label class="check" for="cat-solo">
+          <input id="cat-solo" type="checkbox"> Solo disponibles
+        </label>
+        <button type="button" id="cat-limpiar" class="btn btn-ghost btn-sm">Limpiar filtros</button>
+      </form>
+
+      <p id="cat-count" class="hint" role="status"></p>
+      <div id="cat-grid" class="autos-grid"></div>
+    </section>
+
+    <!-- ================= ALQUILERES ================= -->
+    <section id="view-alquileres" class="view">
+      <header class="view__header view__header--row">
+        <div>
+          <h1>Alquileres</h1>
+          <p class="view__desc">Registrá retiros, devoluciones y cancelaciones, y consultá el historial.</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-ghost" data-action="refresh" aria-label="Actualizar"><span data-icon="refresh"></span>Actualizar</button>
+          <button class="btn btn-primary" data-action="new-alquiler"><span data-icon="plus"></span>Nuevo alquiler</button>
+        </div>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Tipo de listado">
+        <button class="tab" role="tab" data-action="alq-tab" data-tab="activos">Activos</button>
+        <button class="tab" role="tab" data-action="alq-tab" data-tab="historial">Historial por cliente</button>
+        <button class="tab" role="tab" data-action="alq-tab" data-tab="todos">Todos</button>
+      </div>
+
+      <div id="alq-toolbar" class="toolbar" hidden>
+        <div class="field">
+          <label for="alq-cliente">Cliente</label>
+          <select id="alq-cliente"></select>
+        </div>
+      </div>
+
+      <div id="alq-tabla"></div>
+    </section>
+
+    <!-- ================= CLIENTES ================= -->
+    <section id="view-clientes" class="view">
+      <header class="view__header view__header--row">
+        <div>
+          <h1>Clientes</h1>
+          <p class="view__desc">Base de clientes. La tarjeta de crédito siempre se muestra enmascarada.</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" data-action="new-cliente"><span data-icon="plus"></span>Registrar cliente</button>
+        </div>
+      </header>
+
+      <form class="toolbar" onsubmit="return false">
+        <div class="field">
+          <label for="cli-q">Buscar</label>
+          <input id="cli-q" type="search" placeholder="Nombre, email o teléfono">
+        </div>
+      </form>
+
+      <div id="cli-tabla"></div>
+    </section>
+
+    <!-- ================= TIENDAS ================= -->
+    <section id="view-tiendas" class="view">
+      <header class="view__header view__header--row">
+        <div>
+          <h1>Tiendas</h1>
+          <p class="view__desc">Puntos de retiro y devolución de la red.</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" data-action="new-tienda"><span data-icon="plus"></span>Nueva tienda</button>
+        </div>
+      </header>
+
+      <form id="tie-filtro" class="toolbar">
+        <div class="field">
+          <label for="tie-ciudad">Filtrar por ciudad</label>
+          <input id="tie-ciudad" type="search" placeholder="Ej: Cali">
+        </div>
+        <button type="submit" class="btn btn-ghost">Buscar</button>
+        <button type="button" id="tie-limpiar" class="btn btn-ghost btn-sm">Ver todas</button>
+      </form>
+
+      <div id="tie-tabla"></div>
+    </section>
+
+    <!-- ================= CATEGORÍAS ================= -->
+    <section id="view-categorias" class="view">
+      <header class="view__header view__header--row">
+        <div>
+          <h1>Categorías</h1>
+          <p class="view__desc">Clasificación del inventario.</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" data-action="new-categoria"><span data-icon="plus"></span>Nueva categoría</button>
+        </div>
+      </header>
+
+      <div id="catg-tabla"></div>
     </section>
 
   </main>
 </div>
 
-<script>
-  // -----------------------------------------------------------------
-  // OJO: el backend serializa con SNAKE_CASE (application.properties),
-  // aunque el OpenAPI/Swagger muestre los campos en camelCase.
-  // Por eso acá se lee/escribe id_auto, precio_dia, fecha_inicio, etc.
-  // -----------------------------------------------------------------
+<!-- Ventana modal reutilizable (formularios, detalle y confirmaciones) -->
+<dialog id="modal" class="modal" aria-labelledby="modal-title"></dialog>
 
-  let API_BASE = 'http://localhost:8080';
+<!-- Avisos -->
+<div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
 
-  const CATEGORIAS = {1:'Económico',2:'Sedán',3:'SUV',4:'Camioneta',5:'Lujo',6:'Eléctrico',7:'Deportivo',8:'Minivan'};
-
-  const PLACEHOLDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120">
-    <rect width="200" height="120" fill="#232833"/>
-    <path d="M35 78 L50 50 Q55 42 65 42 L135 42 Q145 42 150 50 L165 78" fill="none" stroke="#5b6472" stroke-width="4" stroke-linejoin="round"/>
-    <rect x="28" y="76" width="144" height="18" rx="7" fill="#5b6472"/>
-    <circle cx="60" cy="96" r="10" fill="#12151A" stroke="#97A0AC" stroke-width="3"/>
-    <circle cx="140" cy="96" r="10" fill="#12151A" stroke="#97A0AC" stroke-width="3"/>
-  </svg>`;
-  const PLACEHOLDER_IMG = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(PLACEHOLDER_SVG);
-
-  function escapeHtml(str){
-    return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-  function formatCOP(n){
-    return new Intl.NumberFormat('es-CO', {style:'currency', currency:'COP', maximumFractionDigits:0}).format(n ?? 0);
-  }
-  function showBanner(id, msg, type){
-    const el = document.getElementById(id);
-    el.textContent = msg;
-    el.className = 'banner ' + (type === 'ok' ? 'banner--ok' : 'banner--err');
-    el.hidden = false;
-    if(type === 'ok'){ setTimeout(() => { el.hidden = true; }, 6000); }
-  }
-  function setStatus(ok){
-    const el = document.getElementById('conn-status');
-    el.classList.toggle('status--ok', ok);
-    el.classList.toggle('status--err', !ok);
-    el.querySelector('.status__label').textContent = ok ? 'Conectado' : 'Sin conexión';
-  }
-  function showView(name){
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById('view-' + name).classList.add('active');
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === name));
-  }
-
-  async function apiFetch(path, options = {}){
-    const url = API_BASE + path;
-    let res;
-    try{
-      res = await fetch(url, options);
-    } catch(networkErr){
-      setStatus(false);
-      throw new Error('No se pudo conectar con ' + API_BASE + '. Verificá que el backend esté corriendo y que tenga CORS habilitado para este origen.');
-    }
-    const text = await res.text();
-    let data = null;
-    try{ data = text ? JSON.parse(text) : null; } catch(_) { data = text; }
-    if(!res.ok){
-      setStatus(true);
-      const msg = (data && data.message) ? data.message : (typeof data === 'string' && data) ? data : ('Error ' + res.status);
-      throw new Error(msg);
-    }
-    setStatus(true);
-    return data;
-  }
-
-  // ---------------- Catálogo: GET /autos/all y GET /autos ----------------
-  function autoCardHtml(a){
-    const cat = CATEGORIAS[a.id_categoria] || ('Categoría ' + a.id_categoria);
-    const tieneOferta = a.oferta_porcentaje && a.oferta_porcentaje > 0;
-    const precioFinal = tieneOferta ? a.precio_dia * (1 - a.oferta_porcentaje / 100) : a.precio_dia;
-    const imgSrc = a.imagen ? escapeHtml(a.imagen) : PLACEHOLDER_IMG;
-    return `
-      <article class="auto-card">
-        <div class="auto-card__media">
-          <img src="${imgSrc}" alt="${escapeHtml(a.marca)} ${escapeHtml(a.modelo)}"
-               onerror="this.onerror=null;this.src=PLACEHOLDER_IMG;">
-        </div>
-        <div class="auto-card__body">
-          <div class="auto-card__title">${escapeHtml(a.marca)} ${escapeHtml(a.modelo)}</div>
-          <div class="auto-card__meta">
-            <span>${cat}</span>
-            <span class="badge ${a.disponibilidad ? 'badge--ok' : 'badge--no'}">${a.disponibilidad ? 'Disponible' : 'No disponible'}</span>
-          </div>
-          <div class="price-row">
-            ${tieneOferta ? `<span class="price-old">${formatCOP(a.precio_dia)}</span>` : ''}
-            <span class="price">${formatCOP(precioFinal)} <small>/día</small></span>
-            ${tieneOferta ? `<span class="badge badge--oferta">-${a.oferta_porcentaje}%</span>` : ''}
-          </div>
-          <button class="btn btn-ghost" onclick="alquilarAuto(${a.id_auto})" ${a.disponibilidad ? '' : 'disabled'}>
-            Registrar alquiler
-          </button>
-        </div>
-      </article>`;
-  }
-
-  function renderAutos(lista){
-    const grid = document.getElementById('autos-grid');
-    const empty = document.getElementById('autos-empty');
-    if(!lista.length){ grid.innerHTML = ''; empty.hidden = false; return; }
-    empty.hidden = true;
-    grid.innerHTML = lista.map(autoCardHtml).join('');
-  }
-
-  async function cargarAutos(query = ''){
-    try{
-      const path = query ? ('/autos?' + query) : '/autos/all';
-      const data = await apiFetch(path);
-      renderAutos(data || []);
-    } catch(err){
-      showBanner('autos-banner', err.message, 'err');
-    }
-  }
-
-  function alquilarAuto(id){
-    showView('nuevo');
-    const input = document.getElementById('n-id-auto');
-    input.value = id;
-    input.focus();
-  }
-
-  // ---------------- Nuevo alquiler: POST /alquileres/create ----------------
-  async function crearAlquiler(e){
-    e.preventDefault();
-    const body = {
-      id_cliente: Number(document.getElementById('n-id-cliente').value),
-      id_auto: Number(document.getElementById('n-id-auto').value),
-      fecha_inicio: document.getElementById('n-fecha-inicio').value,
-      fecha_fin: document.getElementById('n-fecha-fin').value,
-      ciudad_retirada: document.getElementById('n-ciudad-retirada').value.trim(),
-      ciudad_devolucion: document.getElementById('n-ciudad-devolucion').value.trim(),
-    };
-    if(body.fecha_fin < body.fecha_inicio){
-      showBanner('alquiler-banner', 'La fecha de devolución no puede ser anterior a la de retiro.', 'err');
-      return;
-    }
-    const btn = e.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.textContent = 'Registrando…';
-    try{
-      const creado = await apiFetch('/alquileres/create', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(body)
-      });
-      showBanner('alquiler-banner', `Alquiler #${creado.id_alquiler} registrado. Total: ${formatCOP(creado.precio_total)}.`, 'ok');
-      e.target.reset();
-      document.getElementById('n-fecha-inicio').min = new Date().toISOString().slice(0, 10);
-      cargarActivos();
-    } catch(err){
-      showBanner('alquiler-banner', err.message, 'err');
-    } finally{
-      btn.disabled = false;
-      btn.textContent = 'Registrar alquiler';
-    }
-  }
-
-  // ---------------- Activos: GET /alquileres/activos ----------------
-  function renderActivos(lista){
-    const tbody = document.getElementById('activos-body');
-    const table = document.getElementById('activos-table');
-    const empty = document.getElementById('activos-empty');
-    if(!lista.length){ table.hidden = true; empty.hidden = false; return; }
-    table.hidden = false; empty.hidden = true;
-    tbody.innerHTML = lista.map(al => `
-      <tr>
-        <td>#${al.id_alquiler}</td>
-        <td>${al.id_cliente}</td>
-        <td>${al.id_auto}</td>
-        <td>${al.fecha_inicio} → ${al.fecha_fin}</td>
-        <td>${escapeHtml(al.ciudad_retirada)} → ${escapeHtml(al.ciudad_devolucion)}</td>
-        <td>${formatCOP(al.precio_total)}</td>
-        <td><span class="badge badge--ok">${escapeHtml(al.estado)}</span></td>
-      </tr>`).join('');
-  }
-
-  async function cargarActivos(){
-    try{
-      const data = await apiFetch('/alquileres/activos');
-      renderActivos(data || []);
-    } catch(err){
-      showBanner('activos-banner', err.message, 'err');
-    }
-  }
-
-  // ---------------- Init ----------------
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.nav-btn').forEach(b => {
-      b.addEventListener('click', () => showView(b.dataset.view));
-    });
-
-    document.getElementById('api-base-input').addEventListener('change', e => {
-      API_BASE = e.target.value.trim().replace(/\/$/, '');
-    });
-
-    document.getElementById('filtro-form').addEventListener('submit', e => {
-      e.preventDefault();
-      const ciudad = document.getElementById('f-ciudad').value.trim();
-      const categoria = document.getElementById('f-categoria').value.trim();
-      const params = new URLSearchParams();
-      if(ciudad) params.set('ciudad', ciudad);
-      if(categoria) params.set('id_categoria', categoria);
-      cargarAutos(params.toString());
-    });
-    document.getElementById('btn-ver-todo').addEventListener('click', () => {
-      document.getElementById('f-ciudad').value = '';
-      document.getElementById('f-categoria').value = '';
-      cargarAutos('');
-    });
-
-    document.getElementById('alquiler-form').addEventListener('submit', crearAlquiler);
-    document.getElementById('n-fecha-inicio').min = new Date().toISOString().slice(0, 10);
-    document.getElementById('n-fecha-inicio').addEventListener('change', e => {
-      document.getElementById('n-fecha-fin').min = e.target.value;
-    });
-
-    document.getElementById('btn-refrescar').addEventListener('click', cargarActivos);
-
-    cargarAutos('');
-    cargarActivos();
-  });
-</script>
+<script src="js/app.js"></script>
 </body>
 </html>

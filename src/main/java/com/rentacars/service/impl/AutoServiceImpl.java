@@ -1,32 +1,33 @@
 package com.rentacars.service.impl;
 
 
-import com.rentacars.dto.request.*;
+import com.rentacars.dto.request.CreateAutoRequest;
+import com.rentacars.dto.request.UpdateAutoRequest;
+import com.rentacars.dto.request.UpdateDetalle_autoRequest;
 import com.rentacars.dto.response.CreateAutoResponse;
+import com.rentacars.dto.response.CreateDetalle_autoResponse;
 import com.rentacars.dto.response.UpdateAutoResponse;
 import com.rentacars.exception.BadRequestException;
 import com.rentacars.exception.ResourceNotFoundException;
 import com.rentacars.mapper.AutoMapper;
+import com.rentacars.mapper.Detalle_autoMapper;
 import com.rentacars.model.Auto;
 import com.rentacars.model.Detalle_auto;
+import com.rentacars.repository.AlquilerRepository;
 import com.rentacars.repository.AutoRepository;
 import com.rentacars.repository.Detalle_autoRepository;
 import com.rentacars.service.AutoService;
+import com.rentacars.service.CategoriaService;
+import com.rentacars.service.TiendaService;
 import lombok.RequiredArgsConstructor;
-import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.rentacars.dto.response.CreateDetalle_autoResponse;
-
-// repo para chequear alquileres
-import com.rentacars.repository.AlquilerRepository;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-
-import java.util.List;
-
-import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AutoServiceImpl implements AutoService {
@@ -36,38 +37,47 @@ public class AutoServiceImpl implements AutoService {
     // valida FK antes de borrar
     private final AlquilerRepository alquilerRepository;
 
+    // HU-08 (v2): valida que la tienda y la categoria existan con una llamada directa (antes era HTTP)
+    private final TiendaService tiendaService;
+    private final CategoriaService categoriaService;
 
 
-    //obtiene lista autos
+    //obtiene lista autos, cada uno con su ficha comercial
     @Override
+    @Transactional(readOnly = true)
     public List<CreateAutoResponse> getAllAutos() {
 
         List<Auto> autos = autoRepository.findAll();
-        List<CreateAutoResponse> createAutoResponseList = AutoMapper.entityToListCreateAutoResponse(autos);
-        return createAutoResponseList;
 
-    }
-  
-    //HU-09  
-  @Override
-    public List<CreateAutoResponse> buscarAutos(String ciudad, Long idCategoria) {
-        List<Auto> autos = autoRepository.buscarDisponibles(ciudad, idCategoria);
+        // una sola consulta para todas las fichas
+        Map<Long, Detalle_auto> detallesPorAuto = detalleAutoRepository.findAll().stream()
+                .collect(Collectors.toMap(Detalle_auto::getIdAuto, Function.identity(), (a, b) -> a));
 
         return autos.stream()
-                .map(auto -> {
-                    Detalle_auto detalle = detalleAutoRepository.findByIdAuto(auto.getIdAuto())
-                            .orElseThrow(() -> new ResourceNotFoundException(
-                                    "Detalle no encontrado para auto ID: " + auto.getIdAuto()));
+                .map(auto -> AutoMapper.entityToCreateAutoResponse(auto, detallesPorAuto.get(auto.getIdAuto())))
+                .toList();
+    }
 
-                    CreateAutoResponse response = new CreateAutoResponse();
-                    response.setIdAuto(auto.getIdAuto());
-                    response.setDisponibilidad(auto.getDisponibilidad());
-                    response.setModelo(detalle.getModelo());
-                    response.setMarca(detalle.getMarca());
-                    response.setPrecioDia(detalle.getPrecioDia());
-                    response.setOfertaPorcentaje(detalle.getOfertaPorcentaje());
-                    return response;
-                })
+    //HU-09
+    @Override
+    @Transactional(readOnly = true)
+    public List<CreateAutoResponse> buscarAutos(String ciudad, Long idCategoria) {
+
+        // un string en blanco se trata como "sin filtro"
+        String ciudadFiltro = (ciudad == null || ciudad.isBlank()) ? null : ciudad.trim();
+
+        List<Auto> autos = autoRepository.buscarDisponibles(ciudadFiltro, idCategoria);
+        if (autos.isEmpty()) {
+            return List.of();
+        }
+
+        // una sola consulta para las fichas de todos los autos encontrados
+        List<Long> ids = autos.stream().map(Auto::getIdAuto).toList();
+        Map<Long, Detalle_auto> detallesPorAuto = detalleAutoRepository.findByIdAutoIn(ids).stream()
+                .collect(Collectors.toMap(Detalle_auto::getIdAuto, Function.identity(), (a, b) -> a));
+
+        return autos.stream()
+                .map(auto -> AutoMapper.entityToCreateAutoResponse(auto, detallesPorAuto.get(auto.getIdAuto())))
                 .toList();
     }
 
@@ -104,26 +114,24 @@ public class AutoServiceImpl implements AutoService {
         return response;
     }
 
-    
-
- 
     //HU-11
-   @Override
-   @Transactional
-   public CreateAutoResponse actualizarDisponibilidad (Long id, UpdateAutoRequest request){
-       Auto auto = autoRepository.findById(id)
-               .orElseThrow(() -> new ResourceNotFoundException("Auto no encontrado con ID:"+ id));
-       auto.setDisponibilidad(request.getDisponibilidad());
-       Auto autoGuardado = autoRepository.save(auto);
+    @Override
+    @Transactional
+    public CreateAutoResponse actualizarDisponibilidad(Long id, UpdateAutoRequest request) {
+        Auto auto = autoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Auto no encontrado con ID: " + id));
+        auto.setDisponibilidad(request.getDisponibilidad());
+        Auto autoGuardado = autoRepository.save(auto);
 
-       CreateAutoResponse response = new CreateAutoResponse();
-       response.setIdAuto(autoGuardado.getIdAuto());
-       response.setDisponibilidad(autoGuardado.getDisponibilidad());
-       return response;
-   }
+        CreateAutoResponse response = new CreateAutoResponse();
+        response.setIdAuto(autoGuardado.getIdAuto());
+        response.setDisponibilidad(autoGuardado.getDisponibilidad());
+        return response;
+    }
 
     // HU-12 (Cardona): obtiene el detalle completo del auto (autos + detalles_autos), con precio calculado
     @Override
+    @Transactional(readOnly = true)
     public CreateDetalle_autoResponse getAutoById(Long id) {
 
         Auto auto = autoRepository.findById(id)
@@ -135,90 +143,61 @@ public class AutoServiceImpl implements AutoService {
         return AutoMapper.entityToCreateDetalle_autoResponse(auto, detalle);
     }
 
-    //crea auto
+    // HU-08 (Cifuentes): registra el auto y su ficha comercial en dos inserts dentro de una sola transaccion
     @Override
-    public CreateAutoResponse createAuto(CreateAutoRequest createAutoRequest) throws Exception {
+    @Transactional
+    public CreateAutoResponse createAuto(CreateAutoRequest request) {
 
-        try {
-            if (createAutoRequest == null) {
-                throw new Exception("El objeto CreateAutoRequest no puede ser nulo");
-            }
+        // la tienda y la categoria deben existir (404 si no)
+        tiendaService.getTiendaById(request.getIdTienda());
+        categoriaService.obtenerCategoria(request.getIdCategoria());
 
-            if (createAutoRequest.getIdTienda() == null || createAutoRequest.getIdTienda() <= 0) {
-                throw new Exception("El idTienda es requerido y debe ser mayor a 0");
-            }
-
-            if (createAutoRequest.getIdCategoria() == null || createAutoRequest.getIdCategoria() <= 0) {
-                throw new Exception("El idCategoria es requerido y debe ser mayor a 0");
-            }
-
-            if (createAutoRequest.getDisponibilidad() == null) {
-                throw new Exception("La disponibilidad es requerida");
-            }
-
-            Auto auto = Auto.builder()
-                    .disponibilidad(createAutoRequest.getDisponibilidad())
-                    .idTienda(createAutoRequest.getIdTienda())
-                    .idCategoria(createAutoRequest.getIdCategoria())
-                    .build();
-
-            auto = autoRepository.save(auto);
-
-            return AutoMapper.entityToCreateAutoResponse(auto);
-
-        } catch (Exception e) {
-            throw e;
+        // la placa es unica
+        if (detalleAutoRepository.existsByPlaca(request.getPlaca())) {
+            throw new BadRequestException("La placa ya esta registrada");
         }
+
+        // 1. primero el auto (nace disponible) para obtener su id_auto
+        Auto auto = autoRepository.save(AutoMapper.createAutoRequestToEntity(request));
+
+        // 2. luego la ficha comercial usando ese id_auto; si falla, se revierte tambien el auto
+        Detalle_auto detalle = detalleAutoRepository.save(
+                Detalle_autoMapper.createDetalle_autoRequestToEntity(request, auto.getIdAuto()));
+
+        return AutoMapper.entityToCreateAutoResponseWithDetalles(auto, detalle);
     }
 
     //metodo para actualizar atributos
     @Override
-    public UpdateAutoResponse updateAuto(Long id, UpdateAutoRequest updateAutoRequest) throws Exception {
+    @Transactional
+    public UpdateAutoResponse updateAuto(Long id, UpdateAutoRequest updateAutoRequest) {
 
-        try {
+        //busca auto por id, 404 si no existe
+        Auto auto = autoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Auto no encontrado con id " + id));
 
-
-            // Validar id no nulo
-            if (id == null){
-                throw new Exception("El objeto Auto debe existir");
-            }
-
-
-            //valida request no nulo
-            if (updateAutoRequest == null){
-                throw new Exception("El objeto UpdateAutoRequest no puede ser nulo");
-            }
-
-            //busca auto por id
-            Auto auto = autoRepository.findById(id).orElseThrow(() -> new RuntimeException("Auto not found with id; " + id));
-
-            //actualiza disponibilidad
-            if (updateAutoRequest.getDisponibilidad() != null) {
-                auto.setDisponibilidad(updateAutoRequest.getDisponibilidad());
-            }
-
-            //actualiza tienda
-            if (updateAutoRequest.getIdTienda() != null) {
-                auto.setIdTienda(updateAutoRequest.getIdTienda());
-            }
-
-            //actualiza categoria
-            if (updateAutoRequest.getIdCategoria() != null) {
-                auto.setIdCategoria(updateAutoRequest.getIdCategoria());
-            }
-
-            //guarda entidad actualizada
-            auto = autoRepository.save(auto);
-
-            //convierte a update response
-            UpdateAutoResponse response = AutoMapper.entityToUpdateAutoResponse(auto);
-
-            //retorna dto
-            return response;
-
-        } catch (Exception e) {
-            throw e;
+        //actualiza disponibilidad
+        if (updateAutoRequest.getDisponibilidad() != null) {
+            auto.setDisponibilidad(updateAutoRequest.getDisponibilidad());
         }
+
+        //actualiza tienda, que debe existir
+        if (updateAutoRequest.getIdTienda() != null) {
+            tiendaService.getTiendaById(updateAutoRequest.getIdTienda());
+            auto.setIdTienda(updateAutoRequest.getIdTienda());
+        }
+
+        //actualiza categoria, que debe existir
+        if (updateAutoRequest.getIdCategoria() != null) {
+            categoriaService.obtenerCategoria(updateAutoRequest.getIdCategoria());
+            auto.setIdCategoria(updateAutoRequest.getIdCategoria());
+        }
+
+        //guarda entidad actualizada
+        auto = autoRepository.save(auto);
+
+        //convierte a update response
+        return AutoMapper.entityToUpdateAutoResponse(auto);
     }
 
 
@@ -249,7 +228,5 @@ public class AutoServiceImpl implements AutoService {
         //borra el auto al final
         autoRepository.delete(auto);
     }
-
-  
 
 }

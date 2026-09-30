@@ -1,20 +1,22 @@
 package com.rentacars.dto.request;
 
-import lombok.AllArgsConstructor;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-//valid
-import jakarta.validation.constraints.NotNull;
-
+/**
+ * HU-08: body de POST /autos.
+ *
+ * Hereda de CreateDetalle_autoRequest los campos de la ficha (modelo, marca, anio,
+ * placa, precio_dia, oferta_porcentaje, imagen). Aqui solo van las llaves foraneas.
+ *
+ * "disponibilidad" ya NO llega del cliente: todo auto nuevo inicia en true.
+ */
 @Getter
-@AllArgsConstructor
+@Setter
 @NoArgsConstructor
-public class CreateAutoRequest {
-
-    //valida disponibilidad requerida
-    @NotNull(message = "La disponibilidad es requerida")
-    private Boolean disponibilidad;
+public class CreateAutoRequest extends CreateDetalle_autoRequest {
 
     //valida id de tienda requerido
     @NotNull(message = "El id de la tienda es requerido")

@@ -32,12 +32,37 @@ public class AutoMapper {
         return autos.stream().map(AutoMapper::entityToCreateAutoResponse).toList();
     }
 
+    // HU-08: auto + ficha comercial en un solo response (listados y busquedas).
+    // Si el auto aun no tiene ficha, sale solo con los datos de autos.
+    public static CreateAutoResponse entityToCreateAutoResponse(Auto auto, Detalle_auto detalle) {
+        CreateAutoResponse response = entityToCreateAutoResponse(auto);
+        if (detalle != null) {
+            response.setModelo(detalle.getModelo());
+            response.setMarca(detalle.getMarca());
+            response.setPrecioDia(detalle.getPrecioDia());
+            response.setOfertaPorcentaje(detalle.getOfertaPorcentaje());
+            response.setImagen(detalle.getImagen());
+        }
+        return response;
+    }
+
+    // HU-08: respuesta del POST /autos, con la ficha anidada en "detalles"
+    public static CreateAutoResponse entityToCreateAutoResponseWithDetalles(Auto auto, Detalle_auto detalle) {
+        return CreateAutoResponse.builder()
+                .idAuto(auto.getIdAuto())
+                .disponibilidad(auto.getDisponibilidad())
+                .idTienda(auto.getIdTienda())
+                .idCategoria(auto.getIdCategoria())
+                .detalles(entityToCreateDetalle_autoResponse(auto, detalle))
+                .build();
+    }
+
     //convierte request a entidad
     public static Auto createAutoRequestToEntity(CreateAutoRequest createAutoRequest){
 
-        //construye entidad auto desde request
+        //construye entidad auto desde request; todo auto nuevo inicia disponible (HU-08)
         return Auto.builder()
-                .disponibilidad(createAutoRequest.getDisponibilidad())
+                .disponibilidad(true)
                 .idTienda(createAutoRequest.getIdTienda())
                 .idCategoria(createAutoRequest.getIdCategoria())
                 .build();

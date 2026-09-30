@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 //valids
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
@@ -42,8 +43,8 @@ public class UpdateAlquilerRequest {
     @Size(max = 50, message = "La ciudadDevolucion soporta hasta 50 caracteres")
     private String ciudadDevolucion;
 
-    //valida estado tamaño
-    @Size(max = 20, message = "El estado soporta hasta 20 caracteres")
+    //la BD solo admite ACTIVO o CERRADO (CHECK); se valida aqui para responder 400 y no un error de PostgreSQL
+    @Pattern(regexp = "ACTIVO|CERRADO", message = "El estado solo puede ser ACTIVO o CERRADO")
     private String estado;
 
 }
