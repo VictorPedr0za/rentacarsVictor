@@ -56,6 +56,12 @@ const ICONS = {
   x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
   toggle: '<rect x="1" y="5" width="22" height="14" rx="7"/><circle cx="16" cy="12" r="3"/>',
   clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/>',
+  moon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
+  check: '<polyline points="20 6 9 17 4 12"/>',
+  alert: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+  inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
 };
 const icon = (name, size = 18) => raw(`<svg class="icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`);
 
@@ -151,6 +157,7 @@ function setConn(ok) {
   const banner = $('#conn-banner');
   banner.hidden = ok;
   if (!ok) {
+    $('.conn').open = true; // deja a mano el campo para corregir la dirección
     banner.textContent = `No se pudo conectar con ${API_BASE || location.origin}. Verificá que el backend esté corriendo y que la dirección de la barra lateral sea correcta (el backend debe permitir este origen por CORS).`;
   }
 }
@@ -186,7 +193,8 @@ const ciudades = () => [...new Set(store.tiendas.map(t => t.ciudad))].sort((a, b
 function toast(msg, type = 'ok') {
   const el = document.createElement('div');
   el.className = `toast toast--${type}`;
-  paint(el, html`<p>${msg}</p><button class="icon-btn" aria-label="Cerrar aviso">${icon('x', 16)}</button>`);
+  paint(el, html`<span class="toast__icon">${icon(type === 'err' ? 'alert' : 'check', 17)}</span>
+    <p>${msg}</p><button class="icon-btn" aria-label="Cerrar aviso">${icon('x', 16)}</button>`);
   const close = () => el.remove();
   $('button', el).addEventListener('click', close);
   $('#toasts').append(el);
@@ -316,7 +324,23 @@ function confirmar({ title, message, confirmLabel = 'Confirmar', danger = false 
    Piezas de interfaz reutilizables
    --------------------------------------------------------------------- */
 const cargando = () => html`<div class="loading" aria-label="Cargando"><div class="skeleton"></div><div class="skeleton" style="width:80%"></div><div class="skeleton" style="width:60%"></div></div>`;
-const vacio = (titulo, texto) => html`<div class="empty"><strong>${titulo}</strong>${texto || ''}</div>`;
+const vacio = (titulo, texto, ic = 'inbox') => html`<div class="empty">
+  <span class="empty__icon">${icon(ic, 26)}</span><strong>${titulo}</strong>${texto || ''}</div>`;
+
+// círculo con las iniciales del nombre; el color sale del propio nombre para que sea estable
+const AVATAR_COLORES = ['#D9822B', '#3E8E7E', '#5B7FD1', '#9A63C9', '#C9566E', '#6E9B3F', '#C2A12D', '#4B8FB8'];
+function avatar(nombre) {
+  const txt = String(nombre || '?').trim();
+  const iniciales = txt.split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase();
+  let h = 0;
+  for (const c of txt) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return html`<span class="avatar" style="background:${AVATAR_COLORES[h % AVATAR_COLORES.length]}" aria-hidden="true">${iniciales}</span>`;
+}
+
+const tarjetasFantasma = (n = 6) => html`${Array.from({ length: n }, () => html`<div class="sk-card">
+  <div class="skeleton sk-card__img" style="border-radius:0"></div>
+  <div class="sk-card__body"><div class="skeleton" style="width:70%;height:20px"></div>
+  <div class="skeleton" style="width:50%"></div><div class="skeleton" style="width:40%;height:24px"></div></div></div>`)}`;
 const tabla = (heads, rows) => html`<div class="table-wrap"><table class="table">
   <thead><tr>${heads.map(h => html`<th scope="col" class="${h.cls || ''}">${h.label ?? h}</th>`)}</tr></thead>
   <tbody>${rows}</tbody></table></div>`;
@@ -386,44 +410,125 @@ async function mutar(fn, mensaje, despues = refreshCurrent) {
 /* =====================================================================
    PANEL
    ===================================================================== */
-function kpi(href, ic, label, value, sub) {
-  return html`<a class="kpi" href="${href}">
-    <span class="kpi__label">${icon(ic)}${label}</span>
+function kpi(href, ic, label, value, sub, tono = '') {
+  return html`<a class="kpi ${tono ? `kpi--${tono}` : ''}" href="${href}">
+    <span class="kpi__chip">${icon(ic, 20)}</span>
+    <span class="kpi__label">${label}</span>
     <span class="kpi__value">${value}</span>
     <span class="kpi__sub">${sub || raw('&nbsp;')}</span>
   </a>`;
 }
 
+// Anillo de proporciones en SVG (sin librerías): partes = [{ valor, color, etiqueta }]
+function donut(partes, centro, etiqueta) {
+  const R = 46;
+  const C = 2 * Math.PI * R;
+  const visibles = partes.filter(p => p.valor > 0);
+  const total = visibles.reduce((s, p) => s + p.valor, 0) || 1;
+  const hueco = visibles.length > 1 ? 3 : 0;
+  let acumulado = 0;
+  const segmentos = visibles.map(p => {
+    const largo = (p.valor / total) * C;
+    const seg = html`<circle class="donut__seg" cx="60" cy="60" r="${R}" fill="none" stroke-width="12"
+      style="stroke:${p.color}" stroke-dasharray="${Math.max(largo - hueco, 0)} ${C}" stroke-dashoffset="${-acumulado}"/>`;
+    acumulado += largo;
+    return seg;
+  });
+  return html`<div class="donut">
+    <svg viewBox="0 0 120 120" role="img" aria-label="${etiqueta}">
+      <circle class="donut__track" cx="60" cy="60" r="${R}" fill="none" stroke-width="12"/>${segmentos}
+    </svg>
+    <div class="donut__center"><span class="donut__value">${centro}</span><span class="donut__label">${etiqueta}</span></div>
+  </div>`;
+}
+
+function saludo() {
+  const h = new Date().getHours();
+  return h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+}
+
+function pintarHero(resumen) {
+  const fecha = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+  paint($('#panel-hero'), html`
+    <svg class="hero__art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=".45" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${raw(ICONS.car)}</svg>
+    <div class="hero__body">
+      <span class="eyebrow">${fecha}</span>
+      <h1>${saludo()}, <span>bienvenido</span> a AutoRent</h1>
+      <p class="hero__sub">${resumen || 'Cargando el resumen de la operación…'}</p>
+      <div class="actions">
+        <button class="btn btn-primary" data-action="new-alquiler">${icon('plus')}Nuevo alquiler</button>
+        <button class="btn btn-ghost" data-action="new-auto">${icon('car')}Registrar auto</button>
+        <button class="btn btn-ghost" data-action="new-cliente">${icon('users')}Registrar cliente</button>
+      </div>
+    </div>`);
+}
+
 async function loadPanel() {
+  pintarHero();
+  paint($('#panel-flota'), cargando());
+  paint($('#panel-categorias'), cargando());
   paint($('#panel-proximas'), cargando());
   paint($('#panel-ofertas'), cargando());
   const [autos, activos] = await Promise.all([api('/autos/all'), api('/alquileres/activos')]);
   store.autos = autos || [];
   store.autosLoaded = true;
+  const total = store.autos.length;
   const disponibles = store.autos.filter(a => a.disponibilidad).length;
+  const alquilados = total - disponibles;
   const listaActivos = activos || [];
 
+  pintarHero(html`Hay <strong>${listaActivos.length} ${listaActivos.length === 1 ? 'alquiler activo' : 'alquileres activos'}</strong> y <strong>${disponibles} de ${total} autos</strong> disponibles para rentar hoy.`);
+
   paint($('#kpis'), html`
-    ${kpi('#/catalogo', 'car', 'Autos en flota', store.autos.length, `${disponibles} disponibles · ${store.autos.length - disponibles} alquilados`)}
-    ${kpi('#/alquileres', 'key', 'Alquileres activos', listaActivos.length, 'Autos que siguen fuera')}
-    ${kpi('#/clientes', 'users', 'Clientes', store.clientes.length)}
-    ${kpi('#/tiendas', 'pin', 'Tiendas', store.tiendas.length, `${ciudades().length} ciudades`)}
-    ${kpi('#/categorias', 'tag', 'Categorías', store.categorias.length)}`);
+    ${kpi('#/catalogo', 'car', 'Autos en flota', total, `${disponibles} disponibles · ${alquilados} alquilados`)}
+    ${kpi('#/alquileres', 'key', 'Alquileres activos', listaActivos.length, 'Autos que siguen fuera', 'green')}
+    ${kpi('#/clientes', 'users', 'Clientes', store.clientes.length, 'Registrados', 'blue')}
+    ${kpi('#/tiendas', 'pin', 'Tiendas', store.tiendas.length, `${ciudades().length} ${ciudades().length === 1 ? 'ciudad' : 'ciudades'}`, 'rose')}
+    ${kpi('#/categorias', 'tag', 'Categorías', store.categorias.length, 'Clasifican el inventario')}`);
+
+  // ---- estado de la flota (anillo) ----
+  paint($('#panel-flota'), total
+    ? html`<div class="flota">
+        ${donut([
+      { valor: disponibles, color: 'var(--success)' },
+      { valor: alquilados, color: 'var(--accent)' },
+    ], `${Math.round((disponibles / total) * 100)}%`, 'disponible')}
+        <div class="legend">
+          <div class="legend__item"><span class="legend__dot" style="background:var(--success)"></span>Disponibles<strong>${disponibles}</strong></div>
+          <div class="legend__item"><span class="legend__dot" style="background:var(--accent)"></span>Alquilados<strong>${alquilados}</strong></div>
+          <div class="legend__item"><span class="legend__dot" style="background:var(--border-strong)"></span>Total flota<strong>${total}</strong></div>
+        </div>
+      </div>`
+    : vacio('Sin autos todavía', 'Registrá el primer auto para ver el estado de la flota.', 'car'));
+
+  // ---- autos por categoría (barras) ----
+  const porCategoria = store.categorias
+    .map(c => ({ nombre: c.nombre, n: store.autos.filter(a => a.id_categoria === c.id_categoria).length }))
+    .sort((a, b) => b.n - a.n);
+  const maximo = Math.max(1, ...porCategoria.map(c => c.n));
+  paint($('#panel-categorias'), porCategoria.length
+    ? html`<div class="bars">${porCategoria.map(c => html`<div class="bar">
+        <div class="bar__head"><span>${c.nombre}</span><span>${c.n} ${c.n === 1 ? 'auto' : 'autos'}</span></div>
+        <div class="bar__track"><div class="bar__fill" style="width:${(c.n / maximo) * 100}%"></div></div>
+      </div>`)}</div>`
+    : vacio('Sin categorías', 'Creá una categoría para clasificar los autos.', 'tag'));
 
   const proximas = [...listaActivos].sort((a, b) => a.fecha_fin.localeCompare(b.fecha_fin)).slice(0, 6);
   paint($('#panel-proximas'), proximas.length
     ? html`<div class="mini-list">${proximas.map(a => {
       const dias = diasEntre(hoy(), a.fecha_fin);
       const cuando = dias === 0 ? 'hoy' : dias === 1 ? 'mañana' : `en ${dias} días`;
+      const [, mes, dia] = parts(a.fecha_fin);
       return html`<div class="mini">
+        <div class="mini__date"><strong>${dia}</strong><span>${MESES[mes - 1]}</span></div>
         <div class="mini__main">
           <div class="mini__title">${autoNombre(a.id_auto)}</div>
-          <div class="mini__sub">${clienteDe(a.id_cliente)?.nombre || `Cliente #${a.id_cliente}`} · devuelve ${fmtFecha(a.fecha_fin)} (${cuando})</div>
+          <div class="mini__sub">${clienteDe(a.id_cliente)?.nombre || `Cliente #${a.id_cliente}`} · devuelve ${cuando}</div>
         </div>
         ${btnIcono('undo', 'Registrar devolución', 'return-alquiler', a.id_alquiler)}
       </div>`;
     })}</div>`
-    : vacio('Sin alquileres activos', 'Cuando se registre un alquiler aparecerá acá.'));
+    : vacio('Sin alquileres activos', 'Cuando se registre un alquiler aparecerá acá.', 'key'));
 
   const ofertas = store.autos.filter(a => Number(a.oferta_porcentaje) > 0)
     .sort((a, b) => b.oferta_porcentaje - a.oferta_porcentaje).slice(0, 6);
@@ -436,7 +541,7 @@ async function loadPanel() {
         </div>
         <span class="badge badge--oferta">-${a.oferta_porcentaje}%</span>
       </div>`)}</div>`
-    : vacio('Sin ofertas', 'Ningún auto tiene descuento activo.'));
+    : vacio('Sin ofertas', 'Ningún auto tiene descuento activo.', 'tag'));
 }
 
 /* =====================================================================
@@ -450,7 +555,7 @@ async function loadCatalogo() {
   $('#cat-q').value = cat.q;
   $('#cat-orden').value = cat.orden;
   $('#cat-solo').checked = cat.solo;
-  paint($('#cat-grid'), cargando());
+  paint($('#cat-grid'), tarjetasFantasma());
 
   if (cat.solo) {
     // HU-09: el backend filtra y devuelve únicamente autos disponibles
@@ -472,22 +577,23 @@ async function loadCatalogo() {
   renderCatalogo();
 }
 
-function autoCard(a) {
+function autoCard(a, indice = 0) {
   const t = tiendaDe(a.id_tienda);
   const oferta = Number(a.oferta_porcentaje) > 0;
   const libre = a.disponibilidad;
-  return html`<article class="auto-card ${libre ? '' : 'is-off'}">
+  return html`<article class="auto-card ${libre ? '' : 'is-off'}" style="--i:${Math.min(indice, 12)}">
     <div class="auto-card__media">
       <img data-fallback src="${a.imagen || PLACEHOLDER_IMG}" alt="${a.marca || ''} ${a.modelo || ''}" loading="lazy">
-      <span class="badge ${libre ? 'badge--ok' : 'badge--no'} auto-card__state">${libre ? 'Disponible' : 'No disponible'}</span>
+      <span class="badge ${libre ? 'badge--ok' : 'badge--no'} auto-card__state">${libre ? 'Disponible' : 'Alquilado'}</span>
       ${oferta ? html`<span class="badge badge--oferta auto-card__offer">-${a.oferta_porcentaje}%</span>` : ''}
     </div>
     <div class="auto-card__body">
+      <div class="auto-card__top"><span class="chip">${categoriaNombre(a.id_categoria)}</span></div>
       <h3 class="auto-card__title">${a.marca} ${a.modelo}</h3>
-      <p class="auto-card__meta">${categoriaNombre(a.id_categoria)} · ${t ? `${t.nombre}, ${t.ciudad}` : 'Sin tienda'}</p>
+      <p class="auto-card__loc">${icon('pin', 15)}${t ? `${t.nombre} · ${t.ciudad}` : 'Sin tienda'}</p>
       <div class="price-row">
+        <span class="price ${oferta ? 'price--deal' : ''}">${fmtCOP(precioFinal(a))} <small>/ día</small></span>
         ${oferta ? html`<span class="price-old">${fmtCOP(a.precio_dia)}</span>` : ''}
-        <span class="price">${fmtCOP(precioFinal(a))} <small>/ día</small></span>
       </div>
       <div class="auto-card__actions">
         <button class="btn btn-primary btn-sm" ${attrs({ 'data-action': 'rent-auto', 'data-id': a.id_auto, disabled: !libre, title: libre ? undefined : 'El auto está alquilado' })}>Alquilar</button>
@@ -517,8 +623,8 @@ function renderCatalogo() {
   lista.sort(orden);
   $('#cat-count').textContent = `${lista.length} ${lista.length === 1 ? 'auto' : 'autos'}${cat.solo ? ' disponibles' : ''}`;
   paint($('#cat-grid'), lista.length
-    ? html`${lista.map(autoCard)}`
-    : html`<div class="span-all">${vacio('No encontramos autos', 'Probá con otra ciudad, categoría o quitá el filtro de disponibles.')}</div>`);
+    ? html`${lista.map((a, i) => autoCard(a, i))}`
+    : html`<div class="span-all">${vacio('No encontramos autos', 'Probá con otra ciudad, categoría o quitá el filtro de disponibles.', 'search')}</div>`);
 }
 
 function initCatalogo() {
@@ -657,10 +763,10 @@ function filasAlquiler(lista) {
     const dias = diasEntre(a.fecha_inicio, a.fecha_fin);
     return html`<tr>
       <td class="mono">#${a.id_alquiler}</td>
-      <td>${clienteDe(a.id_cliente)?.nombre || `Cliente #${a.id_cliente}`}</td>
-      <td>${autoNombre(a.id_auto)}</td>
-      <td>${fmtFecha(a.fecha_inicio)} → ${fmtFecha(a.fecha_fin)}<span class="sub">${dias} ${dias === 1 ? 'día' : 'días'}</span></td>
-      <td>${a.ciudad_retirada} → ${a.ciudad_devolucion}</td>
+      <td class="nw">${clienteDe(a.id_cliente)?.nombre || `Cliente #${a.id_cliente}`}</td>
+      <td class="nw">${autoNombre(a.id_auto)}</td>
+      <td><span class="nw">${fmtFecha(a.fecha_inicio)}</span> → <span class="nw">${fmtFecha(a.fecha_fin)}</span><span class="sub">${dias} ${dias === 1 ? 'día' : 'días'}</span></td>
+      <td><span class="nw">${a.ciudad_retirada}</span> → <span class="nw">${a.ciudad_devolucion}</span></td>
       <td class="num">${fmtCOP(a.precio_total)}</td>
       <td>${estadoAlquiler(a)}</td>
       <td class="col-actions">
@@ -686,14 +792,14 @@ async function loadAlquileres() {
   if (alq.tab === 'activos') lista = await api('/alquileres/activos');
   else if (alq.tab === 'todos') lista = await api('/alquileres/all');
   else {
-    if (!alq.clienteId) { paint(cont, vacio('Elegí un cliente', 'Se mostrará su historial completo de alquileres.')); return; }
+    if (!alq.clienteId) { paint(cont, vacio('Elegí un cliente', 'Se mostrará su historial completo de alquileres.', 'users')); return; }
     lista = await api(`/alquileres?id_cliente=${encodeURIComponent(alq.clienteId)}`);
   }
   lista = lista || [];
   const heads = ['Nº', 'Cliente', 'Auto', 'Fechas', 'Ruta', { label: 'Total', cls: 'num' }, 'Estado', { label: 'Acciones', cls: 'col-actions' }];
   paint(cont, lista.length
     ? tabla(heads, filasAlquiler(lista))
-    : vacio(alq.tab === 'activos' ? 'No hay alquileres activos' : 'Sin alquileres', alq.tab === 'historial' ? 'Este cliente todavía no tiene alquileres.' : ''));
+    : vacio(alq.tab === 'activos' ? 'No hay alquileres activos' : 'Sin alquileres', alq.tab === 'historial' ? 'Este cliente todavía no tiene alquileres.' : '', 'key'));
 }
 
 async function nuevoAlquiler({ autoId } = {}) {
@@ -789,11 +895,11 @@ function renderClientes() {
   const q = normalizar(cli.q.trim());
   const lista = store.clientes.filter(c => !q || normalizar(`${c.nombre} ${c.email} ${c.telefono}`).includes(q));
   const cont = $('#cli-tabla');
-  if (!store.clientes.length) { paint(cont, vacio('Todavía no hay clientes', 'Registrá el primero con el botón de arriba.')); return; }
-  if (!lista.length) { paint(cont, vacio('Sin resultados', 'Ningún cliente coincide con la búsqueda.')); return; }
+  if (!store.clientes.length) { paint(cont, vacio('Todavía no hay clientes', 'Registrá el primero con el botón de arriba.', 'users')); return; }
+  if (!lista.length) { paint(cont, vacio('Sin resultados', 'Ningún cliente coincide con la búsqueda.', 'search')); return; }
   paint(cont, tabla(['Cliente', 'Email', 'Teléfono', 'Tarjeta', { label: 'Acciones', cls: 'col-actions' }],
     lista.map(c => html`<tr>
-      <td><strong>${c.nombre}</strong><span class="sub">ID ${c.id_cliente}</span></td>
+      <td><div class="cell-person">${avatar(c.nombre)}<div><strong>${c.nombre}</strong><span class="sub">ID ${c.id_cliente}</span></div></div></td>
       <td>${c.email}</td>
       <td class="mono">${c.telefono}</td>
       <td class="mono">${c.tarjeta_credito || '—'}</td>
@@ -879,7 +985,7 @@ async function loadTiendas() {
           ${btnIcono('trash', 'Eliminar tienda', 'delete-tienda', t.id_tienda, { danger: true })}
         </td>
       </tr>`))
-    : vacio(tie.ciudad ? 'No hay tiendas en esa ciudad' : 'Todavía no hay tiendas', tie.ciudad ? 'Probá con otra ciudad.' : 'Registrá la primera con el botón de arriba.'));
+    : vacio(tie.ciudad ? 'No hay tiendas en esa ciudad' : 'Todavía no hay tiendas', tie.ciudad ? 'Probá con otra ciudad.' : 'Registrá la primera con el botón de arriba.', 'pin'));
 }
 
 const camposTienda = [
@@ -937,7 +1043,7 @@ async function loadCategorias() {
           ${btnIcono('trash', 'Eliminar categoría', 'delete-categoria', c.id_categoria, { danger: true })}
         </td>
       </tr>`))
-    : vacio('Todavía no hay categorías', 'Registrá la primera con el botón de arriba.'));
+    : vacio('Todavía no hay categorías', 'Registrá la primera con el botón de arriba.', 'tag'));
 }
 
 const camposCategoria = [
@@ -1038,8 +1144,29 @@ modal().addEventListener('click', ev => { if (ev.target === modal()) modal().clo
 /* ---------------------------------------------------------------------
    Arranque
    --------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------
+   Tema claro / oscuro (el guardado, o el del sistema la primera vez)
+   --------------------------------------------------------------------- */
+function aplicarTema(tema) {
+  document.documentElement.setAttribute('data-theme', tema);
+  const oscuro = tema === 'dark';
+  $('.theme-toggle__icon').innerHTML = icon(oscuro ? 'sun' : 'moon', 17).s;
+  $('.theme-toggle__label').textContent = oscuro ? 'Tema claro' : 'Tema oscuro';
+  $('#theme-toggle').setAttribute('aria-label', oscuro ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro');
+}
+
+function initTema() {
+  aplicarTema(document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark');
+  $('#theme-toggle').addEventListener('click', () => {
+    const nuevo = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    aplicarTema(nuevo);
+    try { localStorage.setItem('autorent.theme', nuevo); } catch (_) { /* sin almacenamiento */ }
+  });
+}
+
 function init() {
   $$('[data-icon]').forEach(el => { el.outerHTML = icon(el.dataset.icon).s; });
+  initTema();
 
   const input = $('#api-base-input');
   input.value = API_BASE;

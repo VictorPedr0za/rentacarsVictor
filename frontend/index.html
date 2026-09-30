@@ -3,12 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="dark light">
 <title>AutoRent · Consola de operaciones</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23F5B90A'/%3E%3Cpath d='M6 19l2.2-5.5A2 2 0 0 1 10 12h12a2 2 0 0 1 1.8 1.5L26 19' fill='none' stroke='%2317140A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='5' y='19' width='22' height='5' rx='2' fill='%2317140A'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
+<script>
+  // aplica el tema guardado (o el del sistema) antes de pintar, para evitar el parpadeo
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('autorent.theme'); } catch (e) {}
+    if (t !== 'light' && t !== 'dark') t = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Saltar al contenido</a>
@@ -19,7 +29,9 @@
   <!-- ================= BARRA LATERAL ================= -->
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand__mark">AR</div>
+      <div class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19l2.2-5.5A2 2 0 0 1 10 12h12a2 2 0 0 1 1.8 1.5L26 19"/><rect x="5" y="19" width="22" height="5" rx="2" fill="currentColor"/><circle cx="10" cy="24.5" r="1.6" fill="currentColor"/><circle cx="22" cy="24.5" r="1.6" fill="currentColor"/></svg>
+      </div>
       <div>
         <div class="brand__name">AutoRent</div>
         <div class="brand__sub">Consola de operaciones</div>
@@ -28,23 +40,38 @@
 
     <nav class="nav" aria-label="Secciones">
       <a class="nav-link" href="#/panel" data-view="panel"><span data-icon="grid"></span>Panel</a>
+
+      <p class="nav__label">Operación</p>
       <a class="nav-link" href="#/catalogo" data-view="catalogo"><span data-icon="car"></span>Catálogo de autos</a>
       <a class="nav-link" href="#/alquileres" data-view="alquileres"><span data-icon="key"></span>Alquileres</a>
+
+      <p class="nav__label">Gestión</p>
       <a class="nav-link" href="#/clientes" data-view="clientes"><span data-icon="users"></span>Clientes</a>
       <a class="nav-link" href="#/tiendas" data-view="tiendas"><span data-icon="pin"></span>Tiendas</a>
       <a class="nav-link" href="#/categorias" data-view="categorias"><span data-icon="tag"></span>Categorías</a>
     </nav>
 
     <div class="sidebar__footer">
-      <div id="conn-status" class="status" role="status">
-        <span class="status__dot"></span>
-        <span class="status__label">Sin consultar todavía</span>
-      </div>
-      <div class="field">
-        <label for="api-base-input">Dirección del backend</label>
-        <input id="api-base-input" type="text" spellcheck="false" autocomplete="off" placeholder="http://localhost:8080">
-      </div>
-      <p class="hint">Se guarda en este navegador. Si esta página se sirve desde el mismo backend, dejá el campo vacío.</p>
+      <details class="conn">
+        <summary>
+          <span id="conn-status" class="status" role="status">
+            <span class="status__dot"></span>
+            <span class="status__label">Sin consultar todavía</span>
+          </span>
+          <span class="conn__chev" aria-hidden="true"></span>
+        </summary>
+        <div class="conn__body">
+          <div class="field">
+            <label for="api-base-input">Dirección del backend</label>
+            <input id="api-base-input" type="text" spellcheck="false" autocomplete="off" placeholder="http://localhost:8080">
+          </div>
+          <p class="hint">Se guarda en este navegador. Si esta página se sirve desde el mismo backend, dejá el campo vacío.</p>
+        </div>
+      </details>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cambiar entre tema claro y oscuro">
+        <span class="theme-toggle__icon" aria-hidden="true"></span>
+        <span class="theme-toggle__label"></span>
+      </button>
     </div>
   </aside>
 
@@ -54,19 +81,20 @@
 
     <!-- ================= PANEL ================= -->
     <section id="view-panel" class="view">
-      <header class="view__header view__header--row">
-        <div>
-          <h1>Panel</h1>
-          <p class="view__desc">Resumen de la operación: flota, alquileres y próximas devoluciones.</p>
-        </div>
-        <div class="actions">
-          <button class="btn btn-primary" data-action="new-alquiler"><span data-icon="plus"></span>Nuevo alquiler</button>
-          <button class="btn btn-ghost" data-action="new-auto"><span data-icon="car"></span>Registrar auto</button>
-          <button class="btn btn-ghost" data-action="new-cliente"><span data-icon="users"></span>Registrar cliente</button>
-        </div>
-      </header>
+      <div id="panel-hero" class="hero"></div>
 
       <div id="kpis" class="kpis"></div>
+
+      <div class="grid-2">
+        <section class="card">
+          <h2 class="card__title">Estado de la flota</h2>
+          <div id="panel-flota"></div>
+        </section>
+        <section class="card">
+          <h2 class="card__title">Autos por categoría</h2>
+          <div id="panel-categorias"></div>
+        </section>
+      </div>
 
       <div class="grid-2">
         <section class="card">
@@ -84,6 +112,7 @@
     <section id="view-catalogo" class="view">
       <header class="view__header view__header--row">
         <div>
+          <span class="eyebrow">Operación</span>
           <h1>Catálogo de autos</h1>
           <p class="view__desc">Consultá la flota, filtrá por ciudad y categoría, y administrá cada vehículo.</p>
         </div>
@@ -92,8 +121,8 @@
         </div>
       </header>
 
-      <form id="cat-filtros" class="toolbar" autocomplete="off">
-        <div class="field">
+      <form id="cat-filtros" class="toolbar toolbar--panel" autocomplete="off">
+        <div class="field field--grow">
           <label for="cat-q">Buscar</label>
           <input id="cat-q" type="search" placeholder="Marca o modelo">
         </div>
@@ -117,10 +146,10 @@
         <label class="check" for="cat-solo">
           <input id="cat-solo" type="checkbox"> Solo disponibles
         </label>
-        <button type="button" id="cat-limpiar" class="btn btn-ghost btn-sm">Limpiar filtros</button>
+        <button type="button" id="cat-limpiar" class="btn btn-ghost btn-sm">Limpiar</button>
       </form>
 
-      <p id="cat-count" class="hint" role="status"></p>
+      <p id="cat-count" class="result-count" role="status"></p>
       <div id="cat-grid" class="autos-grid"></div>
     </section>
 
@@ -128,6 +157,7 @@
     <section id="view-alquileres" class="view">
       <header class="view__header view__header--row">
         <div>
+          <span class="eyebrow">Operación</span>
           <h1>Alquileres</h1>
           <p class="view__desc">Registrá retiros, devoluciones y cancelaciones, y consultá el historial.</p>
         </div>
@@ -143,7 +173,7 @@
         <button class="tab" role="tab" data-action="alq-tab" data-tab="todos">Todos</button>
       </div>
 
-      <div id="alq-toolbar" class="toolbar" hidden>
+      <div id="alq-toolbar" class="toolbar toolbar--panel" hidden>
         <div class="field">
           <label for="alq-cliente">Cliente</label>
           <select id="alq-cliente"></select>
@@ -157,6 +187,7 @@
     <section id="view-clientes" class="view">
       <header class="view__header view__header--row">
         <div>
+          <span class="eyebrow">Gestión</span>
           <h1>Clientes</h1>
           <p class="view__desc">Base de clientes. La tarjeta de crédito siempre se muestra enmascarada.</p>
         </div>
@@ -165,8 +196,8 @@
         </div>
       </header>
 
-      <form class="toolbar" onsubmit="return false">
-        <div class="field">
+      <form class="toolbar toolbar--panel" onsubmit="return false">
+        <div class="field field--grow">
           <label for="cli-q">Buscar</label>
           <input id="cli-q" type="search" placeholder="Nombre, email o teléfono">
         </div>
@@ -179,6 +210,7 @@
     <section id="view-tiendas" class="view">
       <header class="view__header view__header--row">
         <div>
+          <span class="eyebrow">Gestión</span>
           <h1>Tiendas</h1>
           <p class="view__desc">Puntos de retiro y devolución de la red.</p>
         </div>
@@ -187,12 +219,12 @@
         </div>
       </header>
 
-      <form id="tie-filtro" class="toolbar">
-        <div class="field">
+      <form id="tie-filtro" class="toolbar toolbar--panel">
+        <div class="field field--grow">
           <label for="tie-ciudad">Filtrar por ciudad</label>
           <input id="tie-ciudad" type="search" placeholder="Ej: Cali">
         </div>
-        <button type="submit" class="btn btn-ghost">Buscar</button>
+        <button type="submit" class="btn btn-ghost btn-sm">Buscar</button>
         <button type="button" id="tie-limpiar" class="btn btn-ghost btn-sm">Ver todas</button>
       </form>
 
@@ -203,6 +235,7 @@
     <section id="view-categorias" class="view">
       <header class="view__header view__header--row">
         <div>
+          <span class="eyebrow">Gestión</span>
           <h1>Categorías</h1>
           <p class="view__desc">Clasificación del inventario.</p>
         </div>
