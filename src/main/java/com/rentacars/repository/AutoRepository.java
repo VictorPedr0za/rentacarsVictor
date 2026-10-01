@@ -10,14 +10,15 @@ import java.util.List;
 
 @Repository
 public interface AutoRepository extends JpaRepository<Auto, Long> {
-    // HU-09 (Suarez): busca autos disponibles, con filtros opcionales de ciudad y categoria
-    @Query("""
-        SELECT a FROM Auto a
-        JOIN Tienda t ON a.idTienda = t.idTienda
-        WHERE a.disponibilidad = true
-          AND (:ciudad IS NULL OR LOWER(t.ciudad) = LOWER(CAST(:ciudad AS string)))
-          AND (:idCategoria IS NULL OR a.idCategoria = :idCategoria)
-        """)
-    List<Auto> buscarDisponibles(@Param("ciudad") String ciudad, @Param("idCategoria") Long idCategoria);
-
+    @Query(value = """
+        SELECT a.*
+        FROM autos a
+        JOIN tiendas t ON t.id_tienda = a.id_tienda
+        WHERE a.disponibilidad = TRUE
+          AND (:ciudad IS NULL OR LOWER(t.ciudad) = LOWER(:ciudad))
+          AND (:idCategoria IS NULL OR a.id_categoria = :idCategoria)
+        ORDER BY a.id_auto
+        """, nativeQuery = true)
+    List<Auto> buscarDisponibles(@Param("ciudad") String ciudad,
+                                 @Param("idCategoria") Long idCategoria);
 }

@@ -8,8 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface Detalle_autoRepository extends JpaRepository<Detalle_auto, Long> {
-
-    // HU-12 (Cardona): busca la ficha comercial de un auto a partir de su id_auto
     Optional<Detalle_auto> findByIdAuto(Long idAuto);
-
+    boolean existsByPlacaIgnoreCase(String placa);
+    void deleteByIdAuto(Long idAuto);
 }

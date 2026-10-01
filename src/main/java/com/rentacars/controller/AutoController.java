@@ -1,150 +1,64 @@
 package com.rentacars.controller;
 
-
 import com.rentacars.dto.request.CreateAutoRequest;
-import com.rentacars.dto.request.UpdateDetalle_autoRequest;
-import com.rentacars.dto.response.CreateAutoResponse;
 import com.rentacars.dto.request.UpdateAutoRequest;
-import com.rentacars.dto.response.CreateDetalle_autoResponse;
-import com.rentacars.dto.response.UpdateAutoResponse;
+import com.rentacars.dto.request.UpdateDetalle_autoRequest;
+import com.rentacars.dto.response.*;
 import com.rentacars.service.AutoService;
-import lombok.AllArgsConstructor;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.rentacars.dto.request.UpdateAutoRequest;
-import com.rentacars.dto.response.CreateAutoResponse;
-import com.rentacars.service.AutoService;
-
-import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.*;
-
-//importa el valid
-import jakarta.validation.Valid;
-
-//importa para agregar documentacion de swagger
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-
 import java.util.List;
 
 @RestController
-@AllArgsConstructor
 @RequestMapping("/autos")
-@Tag(name = "autos", description = "operaciones de autos")
+@RequiredArgsConstructor
 public class AutoController {
-  
-  
     private final AutoService autoService;
-  
-  // HU-09 (Suarez):
+
+    // HU-08
+    @PostMapping
+    public ResponseEntity<AutoCreateResponse> crearAuto(@Valid @RequestBody CreateAutoRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(autoService.crearAuto(request));
+    }
+
+    // HU-09
     @GetMapping
-    public ResponseEntity<List<CreateAutoResponse>> buscarAutos(
+    public ResponseEntity<List<AutoSearchResponse>> buscarAutos(
             @RequestParam(required = false) String ciudad,
-            @RequestParam(required = false, name = "id_categoria") Long idCategoria) {
+            @RequestParam(name = "id_categoria", required = false) Long idCategoria) {
         return ResponseEntity.ok(autoService.buscarAutos(ciudad, idCategoria));
     }
 
-    // HU-10 (Suarez):
+    // HU-10
     @PutMapping("/{id}")
-    @Operation(summary = "actualizar detalles comerciales de un auto")
-    public ResponseEntity<CreateAutoResponse> actualizarDetalles(
+    public ResponseEntity<AutoUpdateDetailResponse> actualizarDetalles(
             @PathVariable Long id,
-            @RequestBody UpdateDetalle_autoRequest request) {
+            @Valid @RequestBody UpdateDetalle_autoRequest request) {
         return ResponseEntity.ok(autoService.actualizarDetalles(id, request));
     }
 
-    //HU-11 (SUAREZ):
-    @PatchMapping ("/{id}/disponibilidad")
-    public ResponseEntity<CreateAutoResponse> actualizarDisponibilidad(
+    // HU-11
+    @PatchMapping("/{id}/disponibilidad")
+    public ResponseEntity<AutoAvailabilityResponse> actualizarDisponibilidad(
             @PathVariable Long id,
             @Valid @RequestBody UpdateAutoRequest request) {
-        return ResponseEntity.ok(autoService.actualizarDisponibilidad(id, request));
+        return ResponseEntity.ok(autoService.actualizarDisponibilidad(id, request.getDisponibilidad()));
     }
 
-    
-    /*
-    @GetMapping("/ping")
-    @Operation(summary = "verificar autos")
-    public String ping() {
-        return "pong";
-    }
-    */
-
-    //obtiene lista
-    @GetMapping("/all")
-    @Operation(summary = "listar autos")
-    public List<CreateAutoResponse> getAllAutos(){
-
-        return autoService.getAllAutos();
-
-    }
-
-    //obtiene por id
-    // HU-12 (Cardona): detalle completo del auto con precio calculado
+    // HU-12
     @GetMapping("/{id}")
-    @Operation(summary = "ver detalle completo de un auto")
-    public ResponseEntity<CreateDetalle_autoResponse> getAutoById(@PathVariable Long id){
-
-        CreateDetalle_autoResponse autoResponse = autoService.getAutoById(id);
-
-        return new ResponseEntity<>(
-                autoResponse,
-                HttpStatus.OK
-        );
-
+    public ResponseEntity<AutoDetailResponse> obtenerDetalle(@PathVariable Long id) {
+        return ResponseEntity.ok(autoService.obtenerDetalle(id));
     }
 
-    //hace post
-    @PostMapping("/create")
-    @Operation(summary = "crear auto")
-    public ResponseEntity<CreateAutoResponse> createAuto(
-            @Valid @RequestBody CreateAutoRequest createAutoRequest
-    ) throws Exception {
-
-        CreateAutoResponse autoCreated = autoService.createAuto(createAutoRequest);
-
-        return new ResponseEntity<>(
-                autoCreated,
-                HttpStatus.CREATED
-        );
-    }
-
-    //actualizar segun id
-    @PutMapping("/update/{id}")
-    @Operation(summary = "actualizar auto")
-    public ResponseEntity<UpdateAutoResponse> updateAuto(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateAutoRequest updateAutoRequest
-    ) throws Exception {
-
-        //llama update en service
-        UpdateAutoResponse autoUpdated = autoService.updateAuto(id, updateAutoRequest);
-
-        //retorna response
-        return new ResponseEntity<>(
-                autoUpdated,
-                HttpStatus.CREATED
-        );
-    }
-
-    //elimina auto
-    // HU-13 (Cardona): ruta y codigo que pide el backlog
+    // HU-13
     @DeleteMapping("/{id}")
-    @Operation(summary = "eliminar auto")
-    public ResponseEntity<String> deleteAuto(@PathVariable Long id) {
-
-        //llama service delete
-        autoService.deleteAuto(id);
-
-        //arma mensaje de confirmacion
-        String mensaje = "Se ha eliminado el auto con id: " + id;
-
-        //devuelve mensaje con 200 OK
-        return new ResponseEntity<>(mensaje, HttpStatus.OK);
-      
+    public ResponseEntity<Void> eliminarAuto(@PathVariable Long id) {
+        autoService.eliminarAuto(id);
+        return ResponseEntity.noContent().build();
     }
-
 }
-

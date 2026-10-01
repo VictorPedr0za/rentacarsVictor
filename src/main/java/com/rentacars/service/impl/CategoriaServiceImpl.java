@@ -36,7 +36,7 @@ public class CategoriaServiceImpl implements CategoriaService {
          * Antes de guardar verificamos que
          * no exista otra categoría con el mismo nombre.
          */
-        if (categoriaRepository.existsByNombre(
+        if (categoriaRepository.existsByNombreIgnoreCase(
                 request.getNombre())) {
 
             /*

@@ -1,0 +1,143 @@
+services:
+
+  db:
+    image: postgres:15
+    container_name: db-rentacars-compose
+
+    environment:
+      POSTGRES_USER: cloud_usr
+      POSTGRES_PASSWORD: cloud_pwd
+      POSTGRES_DB: alquilerautos_db
+
+    ports:
+      - "5434:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./script_bd.sql:/docker-entrypoint-initdb.d/01-script_bd.sql:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cloud_usr -d alquilerautos_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+
+  app:
+    image: rentacars-backend:2.0
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: rentacars-app
+
+    ports:
+      - "8081:8080"
+
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/alquilerautos_db
+      SPRING_DATASOURCE_USERNAME: cloud_usr
+      SPRING_DATASOURCE_PASSWORD: cloud_pwd
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+
+  frontend:
+    image: rentacars-frontend:3.0
+
+    build:
+      context: ../rentacars-frontendV3
+      dockerfile: Dockerfile
+
+      args:
+        VITE_API_URL: http://localhost:8081
+
+    container_name: rentacars-frontend
+
+    ports:
+      - "5173:80"
+
+    depends_on:
+      - app
+
+
+volumes:
+  postgres_data:
+    name: rentacars_postgres_data_v12
+
+
+
+
+  #
+  #app:
+    #build:
+      #context: .
+      #dockerfile: Dockerfile
+    #container_name: rentacars-app
+    #ports:
+      #- "8081:8080"
+    #environment:
+      #SPRING_DATASOURCE_URL: jdbc:postgresql://172.16.197.183:5434/alquilerautos_db
+      #SPRING_DATASOURCE_USERNAME: cloud_usr
+      #SPRING_DATASOURCE_PASSWORD: cloud_pwd
+
+
+#services:
+#
+#  db:
+#    image: postgres:15
+#    container_name: db-rentacars-compose
+#
+#    environment:
+#      POSTGRES_USER: cloud_usr
+#      POSTGRES_PASSWORD: cloud_pwd
+#      POSTGRES_DB: alquilerautos_db
+#
+#    ports:
+#      - "5434:5432"
+#
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#
+#
+#  app:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#
+#    container_name: rentacars-app
+#
+#    ports:
+#      - "8081:8080"
+#
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/alquilerautos_db
+#      SPRING_DATASOURCE_USERNAME: cloud_usr
+#      SPRING_DATASOURCE_PASSWORD: cloud_pwd
+#
+#    depends_on:
+#      - db
+
+
+#  frontend:
+#    build:
+#      context: ../rentacars-frontend
+#      dockerfile: Dockerfile
+#
+#      args:
+#        VITE_API_URL: http://localhost:8081
+#
+#    container_name: rentacars-frontend
+#
+#    ports:
+#      - "5173:80"
+#
+#    depends_on:
+#      - app
+#
+#
+#volumes:
+#  postgres_data:
