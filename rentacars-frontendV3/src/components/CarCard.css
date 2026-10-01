@@ -1,0 +1,25 @@
+.car-card {
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  background:#fff;
+  border:1px solid #d5d9d9;
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 1px 2px rgba(15,23,42,.06);
+  transition:transform .16s ease, box-shadow .16s ease;
+}
+.car-card:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(15,23,42,.12); }
+.car-card__visual { position:relative; min-height:168px; display:grid; place-items:center; background:linear-gradient(145deg,#edf2f7,#fafafa); }
+.car-illustration { width:130px; height:86px; display:grid; place-items:center; color:#4c5c6b; border-radius:18px; background:rgba(255,255,255,.68); box-shadow:inset 0 0 0 1px rgba(148,163,184,.2); }
+.discount-badge { position:absolute; top:12px; left:12px; background:#cc0c39; color:white; padding:5px 8px; border-radius:4px; font-weight:800; font-size:.8rem; }
+.car-card__id { position:absolute; right:12px; bottom:10px; color:#6b7280; font-size:.72rem; }
+.car-card__body { display:flex; flex-direction:column; padding:16px; flex:1; }
+.car-card .eyebrow { margin:0 0 3px; color:#687384; font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; }
+.car-card h3 { margin:0; font-size:1.16rem; color:#111827; }
+.availability { display:flex; align-items:center; gap:6px; margin-top:10px; color:#157347; font-size:.8rem; font-weight:600; }
+.availability span { width:8px; height:8px; border-radius:50%; background:#22c55e; }
+.price-block { margin:16px 0 14px; display:grid; grid-template-columns:auto 1fr; align-items:end; gap:0 5px; }
+.price-block small { grid-column:1 / -1; color:#6b7280; }
+.price-block strong { font-size:1.42rem; line-height:1; color:#111827; }
+.price-block > span { color:#667085; font-size:.8rem; }

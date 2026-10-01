@@ -1,0 +1,5 @@
+.app { min-height:100vh; display:flex; flex-direction:column; }
+.site-footer { margin-top:auto; background:#131921; color:#cbd5e1; padding:22px 0; }
+.site-footer .page-width { display:flex; justify-content:space-between; gap:14px; font-size:.82rem; }
+.site-footer strong { color:#fff; }
+@media(max-width:600px){.site-footer .page-width{flex-direction:column}}

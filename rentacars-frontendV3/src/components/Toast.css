@@ -1,0 +1,4 @@
+.toast { position:fixed; z-index:150; right:22px; bottom:22px; max-width:min(430px,calc(100vw - 44px)); display:flex; align-items:center; gap:10px; padding:13px 14px; border-radius:10px; box-shadow:0 12px 30px rgba(15,23,42,.22); background:#fff; color:#1f2937; border-left:5px solid #16a34a; }
+.toast--error { border-left-color:#dc2626; }
+.toast span { flex:1; font-size:.9rem; }
+.toast button { border:0; background:transparent; display:grid; place-items:center; color:#667085; padding:3px; }

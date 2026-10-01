@@ -1,0 +1,80 @@
+.topbar {
+  min-height: 64px;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 10px 26px;
+  background: #131921;
+  color: #fff;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: white;
+  font-size: 1.35rem;
+  letter-spacing: -.02em;
+  padding: 6px 8px;
+}
+.brand:hover { outline: 1px solid rgba(255,255,255,.7); }
+.brand__mark { color: var(--accent); display: grid; place-items: center; }
+.brand strong { color: var(--accent); }
+
+.topbar__spacer { flex: 1; }
+
+.account-pill, .admin-pill {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: white;
+  text-align: left;
+  padding: 5px 8px;
+  border-radius: 2px;
+}
+.account-pill:hover, .admin-pill:hover { outline: 1px solid rgba(255,255,255,.7); }
+.account-pill span, .admin-pill span { display:flex; flex-direction:column; line-height:1.05; }
+.account-pill small, .admin-pill small { color:#d7dde5; font-size:.71rem; }
+.account-pill strong, .admin-pill strong { font-size:.82rem; margin-top:3px; }
+
+.subnav {
+  min-height: 40px;
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  padding: 0 22px;
+  background: #232f3e;
+  color: white;
+  overflow-x: auto;
+}
+.subnav button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: white;
+  padding: 0 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.subnav button:hover { background: rgba(255,255,255,.08); }
+.subnav button.active { border-bottom-color: var(--accent); color: #fff; }
+.subnav__spacer { flex: 1; }
+
+@media (max-width: 900px) {
+  .topbar { padding: 9px 14px; gap:10px; }
+  .admin-pill span { display:none; }
+  .account-pill span { display:none; }
+}
+
+@media (max-width: 520px) {
+  .admin-pill { display:none; }
+  .subnav { padding:0 8px; }
+}
