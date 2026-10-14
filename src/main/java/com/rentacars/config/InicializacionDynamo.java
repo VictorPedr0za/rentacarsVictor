@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
  * Prepara la base de datos ANTES de que el servidor web empiece a recibir peticiones:
  *   1. crea las tablas que falten
  *   2. carga los datos de ejemplo si las tablas estan vacias
+ *   3. corrige las imagenes del seed viejo (fotos al azar) si la base ya existia
  *
  * Por que aqui y no en un ApplicationRunner: los runners se ejecutan cuando el puerto 8080 ya esta
  * abierto, asi que las primeras peticiones podian llegar a tablas que todavia no existian (503).
@@ -25,5 +26,6 @@ public class InicializacionDynamo implements SmartInitializingSingleton {
     public void afterSingletonsInstantiated() {
         tablas.crearTablas();
         datos.cargarSiHaceFalta();
+        datos.corregirImagenesDeEjemplo();
     }
 }

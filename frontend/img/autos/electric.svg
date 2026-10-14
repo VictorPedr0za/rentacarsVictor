@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="31 60 600 375" role="img" aria-label="Eléctrico">
+  <defs>
+    <radialGradient id="fondo" cx="50%" cy="36%" r="78%"><stop offset="0" stop-color="#3b4458"/><stop offset="1" stop-color="#12151b"/></radialGradient>
+    <linearGradient id="cuerpo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#31d1a6"/><stop offset="1" stop-color="#0f7a62"/></linearGradient>
+    <linearGradient id="brillo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="vidrio" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9efff"/><stop offset="1" stop-color="#5a7ea6"/></linearGradient>
+    <radialGradient id="faro" cx="0" cy="50%" r="100%"><stop offset="0" stop-color="#fff6bf" stop-opacity=".55"/><stop offset="1" stop-color="#fff6bf" stop-opacity="0"/></radialGradient>
+    <clipPath id="recorte"><path d="M76 292 L76 266 Q76 248 100 244 L164 236 Q220 206 270 176 Q296 160 336 160 Q384 162 420 186 Q456 210 492 224 L560 238 Q586 244 588 268 L588 292 Z"/></clipPath>
+  </defs>
+  <rect x="31" y="60" width="600" height="375" fill="url(#fondo)"/>
+  <rect x="31" y="322" width="600" height="113" fill="#0d0f13" opacity=".55"/>
+  <ellipse cx="324" cy="334" rx="268" ry="14" fill="#000" opacity=".5"/>
+  <path d="M76 292 L76 266 Q76 248 100 244 L164 236 Q220 206 270 176 Q296 160 336 160 Q384 162 420 186 Q456 210 492 224 L560 238 Q586 244 588 268 L588 292 Z" fill="url(#cuerpo)" stroke="#0c0e12" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M76 292 L76 266 Q76 248 100 244 L164 236 Q220 206 270 176 Q296 160 336 160 Q384 162 420 186 Q456 210 492 224 L560 238 Q586 244 588 268 L588 292 Z" fill="url(#brillo)"/>
+  <path d="M258 212 Q284 182 322 178 L334 178 L334 212 Z" fill="url(#vidrio)" stroke="#0c0e12" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M344 178 Q380 180 408 198 L428 212 L344 212 Z" fill="url(#vidrio)" stroke="#0c0e12" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M80 214 L560 214" stroke="#0c0e12" stroke-opacity=".28" stroke-width="2"/>
+  <path d="M339 180 L339 276" stroke="#0c0e12" stroke-opacity=".4" stroke-width="2"/>
+  <path d="M552 242 L586 250" stroke="#8ffcff" stroke-width="5" stroke-linecap="round"/><path d="M286 232 l16 0 l-6 15 l13 0 l-22 26 l4 -19 l-13 0 z" fill="#ffffff" fill-opacity=".9"/>
+  <circle cx="166" cy="290" r="49" fill="#0c0e12" clip-path="url(#recorte)"/>
+  <circle cx="490" cy="290" r="49" fill="#0c0e12" clip-path="url(#recorte)"/>
+  <circle cx="166" cy="290" r="40" fill="#0c0e12"/><circle cx="166" cy="290" r="31.200000000000003" fill="#1b1e24"/><circle cx="166" cy="290" r="24.8" fill="#d3d7de"/><circle cx="166" cy="290" r="20" fill="#a3aab6"/><circle cx="166" cy="290" r="5.6000000000000005" fill="#2b2f36"/>
+  <circle cx="490" cy="290" r="40" fill="#0c0e12"/><circle cx="490" cy="290" r="31.200000000000003" fill="#1b1e24"/><circle cx="490" cy="290" r="24.8" fill="#d3d7de"/><circle cx="490" cy="290" r="20" fill="#a3aab6"/><circle cx="490" cy="290" r="5.6000000000000005" fill="#2b2f36"/>
+  <ellipse cx="602" cy="257" rx="46" ry="18" fill="url(#faro)"/>
+  <rect x="574" y="252" width="20" height="9" rx="4" fill="#fff7c8" stroke="#0c0e12" stroke-width="1.5"/>
+  <rect x="78" y="252" width="14" height="9" rx="3" fill="#ff3b30" stroke="#0c0e12" stroke-width="1.5"/>
+</svg>

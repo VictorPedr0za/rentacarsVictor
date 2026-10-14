@@ -1,6 +1,7 @@
 package com.rentacars;
 
 import com.jayway.jsonpath.JsonPath;
+import com.rentacars.config.DatosIniciales;
 import com.rentacars.support.DynamoLocalServer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -48,6 +50,9 @@ class DynamoDbIntegracionTest {
 
     @Autowired
     MockMvc mvc;
+
+    @Autowired
+    DatosIniciales datosIniciales;
 
     // ------------------------------------------------------------------ utilidades
 
@@ -129,6 +134,51 @@ class DynamoDbIntegracionTest {
         mvc.perform(get("/css/styles.css")).andExpect(status().isOk());
         // y los archivos internos del frontend no se publican
         mvc.perform(get("/servidor.js")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void losAutosDeEjemploTraenIlustracionesDeCarrosYElBackendLasSirve() throws Exception {
+        mvc.perform(get("/autos/all")).andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.modelo == 'Spark')].imagen").value("/img/autos/hatchback.svg"))
+                .andExpect(jsonPath("$[?(@.modelo == 'Corolla')].imagen").value("/img/autos/sedan.svg"))
+                .andExpect(jsonPath("$[?(@.modelo == 'Ioniq 6')].imagen").value("/img/autos/electric.svg"));
+        // cada ilustracion existe y se entrega como imagen SVG (no dependen de internet)
+        for (String tipo : List.of("hatchback", "sedan", "suv", "pickup", "luxury", "electric", "sport", "minivan")) {
+            mvc.perform(get("/img/autos/" + tipo + ".svg")).andExpect(status().isOk())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                            .content().string(containsString("<svg")));
+        }
+    }
+
+    @Test
+    void laMigracionCambiaLasFotosAlAzarDelSeedViejoPeroNoTocaLasImagenesPuestasPorElUsuario() throws Exception {
+        long corolla = idDeAutoConModelo("Corolla");
+        long spark = idDeAutoConModelo("Spark");
+        // estado de una base creada con el seed viejo (foto al azar) y un auto con imagen propia del usuario
+        enviar(put("/autos/" + corolla), "{ \"imagen\": \"https://picsum.photos/seed/ABC-002/640/400\" }")
+                .andExpect(status().isOk());
+        enviar(put("/autos/" + spark), "{ \"imagen\": \"https://miservidor.com/spark.jpg\" }")
+                .andExpect(status().isOk());
+
+        datosIniciales.corregirImagenesDeEjemplo();
+        datosIniciales.corregirImagenesDeEjemplo(); // idempotente: la segunda vez no encuentra nada que cambiar
+
+        // la imagen viaja en el listado (el detalle por id no la incluye)
+        mvc.perform(get("/autos/all")).andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.modelo == 'Corolla')].imagen").value("/img/autos/sedan.svg"))
+                .andExpect(jsonPath("$[?(@.modelo == 'Corolla')].marca").value("Toyota"))   // el resto de la ficha queda igual
+                .andExpect(jsonPath("$[?(@.modelo == 'Corolla')].oferta_porcentaje").value(10))
+                .andExpect(jsonPath("$[?(@.modelo == 'Spark')].imagen").value("https://miservidor.com/spark.jpg"));
+
+        // deja el ejemplo como estaba para las demas pruebas
+        enviar(put("/autos/" + spark), "{ \"imagen\": \"/img/autos/hatchback.svg\" }").andExpect(status().isOk());
+    }
+
+    @SuppressWarnings("unchecked")
+    private long idDeAutoConModelo(String modelo) throws Exception {
+        String cuerpo = mvc.perform(get("/autos/all")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        return ((List<Number>) JsonPath.read(cuerpo, "$[?(@.modelo == '" + modelo + "')].id_auto")).get(0).longValue();
     }
 
     @Test

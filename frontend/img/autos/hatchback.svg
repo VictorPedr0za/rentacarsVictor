@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="31 60 600 375" role="img" aria-label="Hatchback">
+  <defs>
+    <radialGradient id="fondo" cx="50%" cy="36%" r="78%"><stop offset="0" stop-color="#3b4458"/><stop offset="1" stop-color="#12151b"/></radialGradient>
+    <linearGradient id="cuerpo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a9bff"/><stop offset="1" stop-color="#1c4fb0"/></linearGradient>
+    <linearGradient id="brillo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="vidrio" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9efff"/><stop offset="1" stop-color="#5a7ea6"/></linearGradient>
+    <radialGradient id="faro" cx="0" cy="50%" r="100%"><stop offset="0" stop-color="#fff6bf" stop-opacity=".55"/><stop offset="1" stop-color="#fff6bf" stop-opacity="0"/></radialGradient>
+    <clipPath id="recorte"><path d="M100 296 L100 256 Q100 238 120 232 L170 224 Q184 190 214 176 Q230 168 252 166 L372 166 Q398 168 416 190 L448 224 L530 236 Q560 242 562 268 L562 296 Z"/></clipPath>
+  </defs>
+  <rect x="31" y="60" width="600" height="375" fill="url(#fondo)"/>
+  <rect x="31" y="322" width="600" height="113" fill="#0d0f13" opacity=".55"/>
+  <ellipse cx="324" cy="334" rx="268" ry="14" fill="#000" opacity=".5"/>
+  <path d="M100 296 L100 256 Q100 238 120 232 L170 224 Q184 190 214 176 Q230 168 252 166 L372 166 Q398 168 416 190 L448 224 L530 236 Q560 242 562 268 L562 296 Z" fill="url(#cuerpo)" stroke="#0c0e12" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M100 296 L100 256 Q100 238 120 232 L170 224 Q184 190 214 176 Q230 168 252 166 L372 166 Q398 168 416 190 L448 224 L530 236 Q560 242 562 268 L562 296 Z" fill="url(#brillo)"/>
+  <path d="M224 214 L242 184 L322 184 L322 214 Z" fill="url(#vidrio)" stroke="#0c0e12" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M334 184 L376 184 Q392 186 402 200 L416 214 L334 214 Z" fill="url(#vidrio)" stroke="#0c0e12" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M104 218 L556 218" stroke="#0c0e12" stroke-opacity=".28" stroke-width="2"/>
+  <path d="M328 184 L328 276" stroke="#0c0e12" stroke-opacity=".4" stroke-width="2"/>
+  
+  <circle cx="190" cy="290" r="47" fill="#0c0e12" clip-path="url(#recorte)"/>
+  <circle cx="462" cy="290" r="47" fill="#0c0e12" clip-path="url(#recorte)"/>
+  <circle cx="190" cy="290" r="38" fill="#0c0e12"/><circle cx="190" cy="290" r="29.64" fill="#1b1e24"/><circle cx="190" cy="290" r="23.56" fill="#d3d7de"/><circle cx="190" cy="290" r="19" fill="#a3aab6"/><line x1="190" y1="290" x2="190.0" y2="267.2" stroke="#5b616c" stroke-width="3.8" stroke-linecap="round"/><line x1="190" y1="290" x2="211.7" y2="283.0" stroke="#5b616c" stroke-width="3.8" stroke-linecap="round"/><line x1="190" y1="290" x2="203.4" y2="308.4" stroke="#5b616c" stroke-width="3.8" stroke-linecap="round"/><line x1="190" y1="290" x2="176.6" y2="308.4" stroke="#5b616c" stroke-width="3.8" stroke-linecap="round"/><line x1="190" y1="290" x2="168.3" y2="283.0" stroke="#5b616c" stroke-width="3.8" stroke-linecap="round"/><circle cx="190" cy="290" r="5.32" fill="#2b2f36"/>
+  <circle cx="462" cy="290" r="38" fill="#0c0e12"/><circle cx="462" cy="290" r="29.64" fill="#1b1e24"/><circle cx="462" cy="290" r="23.56" fill="#d3d7de"/><circle cx="462" cy="290" r="19" fill="#a3aab6"/><line x1="462" y1="290" x2="462.0" y2="267.2" stroke="#5b616c" stroke-width="3.8" stroke-linecap="round"/><line x1="462" y1="290" x2="483.7" y2="283.0" stroke="#5b616c" stroke-width="3.8" stroke-linecap="round"/><line x1="462" y1="290" x2="475.4" y2="308.4" stroke="#5b616c" stroke-width="3.8" stroke-linecap="round"/><line x1="462" y1="290" x2="448.6" y2="308.4" stroke="#5b616c" stroke-width="3.8" stroke-linecap="round"/><line x1="462" y1="290" x2="440.3" y2="283.0" stroke="#5b616c" stroke-width="3.8" stroke-linecap="round"/><circle cx="462" cy="290" r="5.32" fill="#2b2f36"/>
+  <ellipse cx="580" cy="251" rx="46" ry="18" fill="url(#faro)"/>
+  <rect x="552" y="246" width="20" height="9" rx="4" fill="#fff7c8" stroke="#0c0e12" stroke-width="1.5"/>
+  <rect x="102" y="246" width="14" height="9" rx="3" fill="#ff3b30" stroke="#0c0e12" stroke-width="1.5"/>
+</svg>

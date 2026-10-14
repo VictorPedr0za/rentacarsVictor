@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="31 60 600 375" role="img" aria-label="Deportivo">
+  <defs>
+    <radialGradient id="fondo" cx="50%" cy="36%" r="78%"><stop offset="0" stop-color="#3b4458"/><stop offset="1" stop-color="#12151b"/></radialGradient>
+    <linearGradient id="cuerpo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23f"/><stop offset="1" stop-color="#d99a00"/></linearGradient>
+    <linearGradient id="brillo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="vidrio" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9efff"/><stop offset="1" stop-color="#5a7ea6"/></linearGradient>
+    <radialGradient id="faro" cx="0" cy="50%" r="100%"><stop offset="0" stop-color="#fff6bf" stop-opacity=".55"/><stop offset="1" stop-color="#fff6bf" stop-opacity="0"/></radialGradient>
+    <clipPath id="recorte"><path d="M74 296 L74 276 Q74 258 100 254 L190 242 Q240 214 292 196 Q320 184 352 184 Q392 186 420 204 L470 232 L560 246 Q590 252 592 276 L592 296 Z"/></clipPath>
+  </defs>
+  <rect x="31" y="60" width="600" height="375" fill="url(#fondo)"/>
+  <rect x="31" y="322" width="600" height="113" fill="#0d0f13" opacity=".55"/>
+  <ellipse cx="324" cy="334" rx="268" ry="14" fill="#000" opacity=".5"/>
+  <path d="M74 296 L74 276 Q74 258 100 254 L190 242 Q240 214 292 196 Q320 184 352 184 Q392 186 420 204 L470 232 L560 246 Q590 252 592 276 L592 296 Z" fill="url(#cuerpo)" stroke="#0c0e12" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M74 296 L74 276 Q74 258 100 254 L190 242 Q240 214 292 196 Q320 184 352 184 Q392 186 420 204 L470 232 L560 246 Q590 252 592 276 L592 296 Z" fill="url(#brillo)"/>
+  <path d="M296 220 Q322 198 352 198 Q384 200 406 214 L416 226 L288 226 Z" fill="url(#vidrio)" stroke="#0c0e12" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M78 230 L560 230" stroke="#0c0e12" stroke-opacity=".28" stroke-width="2"/>
+  <path d="M352 196 L352 280" stroke="#0c0e12" stroke-opacity=".4" stroke-width="2"/>
+  <path d="M82 254 L68 236 L130 236 L140 250 Z" fill="#14171c"/><path d="M200 244 Q300 206 420 206" stroke="#14171c" stroke-opacity=".55" stroke-width="7" fill="none"/>
+  <circle cx="170" cy="294" r="46" fill="#0c0e12" clip-path="url(#recorte)"/>
+  <circle cx="490" cy="294" r="46" fill="#0c0e12" clip-path="url(#recorte)"/>
+  <circle cx="170" cy="294" r="37" fill="#0c0e12"/><circle cx="170" cy="294" r="28.86" fill="#1b1e24"/><circle cx="170" cy="294" r="22.94" fill="#d3d7de"/><circle cx="170" cy="294" r="18.5" fill="#a3aab6"/><line x1="170" y1="294" x2="170.0" y2="271.8" stroke="#5b616c" stroke-width="3.7" stroke-linecap="round"/><line x1="170" y1="294" x2="187.4" y2="280.2" stroke="#5b616c" stroke-width="3.7" stroke-linecap="round"/><line x1="170" y1="294" x2="191.6" y2="298.9" stroke="#5b616c" stroke-width="3.7" stroke-linecap="round"/><line x1="170" y1="294" x2="179.6" y2="314.0" stroke="#5b616c" stroke-width="3.7" stroke-linecap="round"/><line x1="170" y1="294" x2="160.4" y2="314.0" stroke="#5b616c" stroke-width="3.7" stroke-linecap="round"/><line x1="170" y1="294" x2="148.4" y2="298.9" stroke="#5b616c" stroke-width="3.7" stroke-linecap="round"/><line x1="170" y1="294" x2="152.6" y2="280.2" stroke="#5b616c" stroke-width="3.7" stroke-linecap="round"/><circle cx="170" cy="294" r="5.180000000000001" fill="#2b2f36"/>
+  <circle cx="490" cy="294" r="37" fill="#0c0e12"/><circle cx="490" cy="294" r="28.86" fill="#1b1e24"/><circle cx="490" cy="294" r="22.94" fill="#d3d7de"/><circle cx="490" cy="294" r="18.5" fill="#a3aab6"/><line x1="490" y1="294" x2="490.0" y2="271.8" stroke="#5b616c" stroke-width="3.7" stroke-linecap="round"/><line x1="490" y1="294" x2="507.4" y2="280.2" stroke="#5b616c" stroke-width="3.7" stroke-linecap="round"/><line x1="490" y1="294" x2="511.6" y2="298.9" stroke="#5b616c" stroke-width="3.7" stroke-linecap="round"/><line x1="490" y1="294" x2="499.6" y2="314.0" stroke="#5b616c" stroke-width="3.7" stroke-linecap="round"/><line x1="490" y1="294" x2="480.4" y2="314.0" stroke="#5b616c" stroke-width="3.7" stroke-linecap="round"/><line x1="490" y1="294" x2="468.4" y2="298.9" stroke="#5b616c" stroke-width="3.7" stroke-linecap="round"/><line x1="490" y1="294" x2="472.6" y2="280.2" stroke="#5b616c" stroke-width="3.7" stroke-linecap="round"/><circle cx="490" cy="294" r="5.180000000000001" fill="#2b2f36"/>
+  <ellipse cx="608" cy="265" rx="46" ry="18" fill="url(#faro)"/>
+  <rect x="580" y="260" width="20" height="9" rx="4" fill="#fff7c8" stroke="#0c0e12" stroke-width="1.5"/>
+  <rect x="78" y="268" width="14" height="9" rx="3" fill="#ff3b30" stroke="#0c0e12" stroke-width="1.5"/>
+</svg>

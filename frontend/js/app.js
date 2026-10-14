@@ -657,7 +657,8 @@ function camposAuto() {
     { name: 'oferta_porcentaje', label: 'Oferta (%)', type: 'number', min: 0, max: 100, step: '0.5', hint: 'Opcional, de 0 a 100.' },
     { name: 'id_tienda', label: 'Tienda', type: 'select', numeric: true, required: true, placeholder: 'Seleccioná una tienda', options: store.tiendas.map(t => ({ value: t.id_tienda, label: `${t.nombre} · ${t.ciudad}` })) },
     { name: 'id_categoria', label: 'Categoría', type: 'select', numeric: true, required: true, placeholder: 'Seleccioná una categoría', options: store.categorias.map(c => ({ value: c.id_categoria, label: c.nombre })) },
-    { name: 'imagen', label: 'URL de la imagen', type: 'url', maxlength: 2000, full: true, hint: 'Opcional.' },
+    // type "text" (no "url"): también acepta rutas del propio sitio como /img/autos/sedan.svg
+    { name: 'imagen', label: 'Imagen (URL o ruta)', type: 'text', maxlength: 2000, full: true, hint: 'Opcional. Una URL https://… o una ruta como /img/autos/sedan.svg.' },
   ];
 }
 

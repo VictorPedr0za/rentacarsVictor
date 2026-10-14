@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Map;
 
 /**
  * Datos de ejemplo (la parte INSERT del antiguo script_bd.sql). Solo se cargan si la tabla de
@@ -32,6 +33,23 @@ import java.time.LocalDate;
 @Component
 @RequiredArgsConstructor
 public class DatosIniciales {
+
+    /**
+     * Ilustracion de cada auto de ejemplo (archivos de frontend/img/autos). Son rutas relativas, asi que las
+     * sirve el mismo backend (puerto 8080) y tambien el frontend suelto (8081 / nginx). No dependen de internet.
+     */
+    private static final Map<String, String> IMAGEN_POR_PLACA = Map.of(
+            "ABC-001", "/img/autos/hatchback.svg",
+            "ABC-002", "/img/autos/sedan.svg",
+            "ABC-003", "/img/autos/suv.svg",
+            "ABC-004", "/img/autos/pickup.svg",
+            "ABC-005", "/img/autos/luxury.svg",
+            "ABC-006", "/img/autos/electric.svg",
+            "ABC-007", "/img/autos/sport.svg",
+            "ABC-008", "/img/autos/minivan.svg");
+
+    /** Las primeras versiones del seed usaban fotos al azar de picsum.photos (no eran carros). */
+    private static final String IMAGEN_ANTIGUA = "https://picsum.photos/";
 
     private final DynamoProperties props;
     private final TiendaRepository tiendas;
@@ -102,6 +120,36 @@ public class DatosIniciales {
         log.info("Datos de ejemplo cargados: 8 tiendas, 8 categorias, 8 autos, 8 clientes, 8 alquileres");
     }
 
+    /**
+     * Migracion de datos (idempotente): si la base ya tenia el seed viejo con fotos de picsum.photos, cambia SOLO
+     * la imagen de esos autos por su ilustracion. Un auto con otra imagen (la que puso el usuario) no se toca,
+     * y la segunda vez que corre no encuentra nada que cambiar.
+     */
+    public void corregirImagenesDeEjemplo() {
+        if (!props.isSeed()) {
+            return;
+        }
+        int corregidos = 0;
+        for (Auto auto : autos.findAll()) {
+            Detalle_auto detalle = auto.getDetalles();
+            if (detalle == null || detalle.getImagen() == null || !detalle.getImagen().startsWith(IMAGEN_ANTIGUA)) {
+                continue;
+            }
+            String nueva = IMAGEN_POR_PLACA.get(detalle.getPlaca());
+            if (nueva == null) {
+                continue;
+            }
+            // el detalle completo, con la imagen nueva: el update parcial solo reescribe la ficha de ESTE auto
+            Detalle_auto actualizado = new Detalle_auto(nueva, detalle.getModelo(), detalle.getMarca(),
+                    detalle.getAnio(), detalle.getPlaca(), detalle.getPrecioDia(), detalle.getOfertaPorcentaje());
+            autos.actualizarParcial(Auto.builder().idAuto(auto.getIdAuto()).detalles(actualizado).build());
+            corregidos++;
+        }
+        if (corregidos > 0) {
+            log.info("Imagenes de ejemplo actualizadas a ilustraciones de carros: {} autos", corregidos);
+        }
+    }
+
     private long tienda(String nombre, String ciudad, String direccion) {
         Tienda t = new Tienda();
         t.setNombre(nombre);
@@ -117,7 +165,7 @@ public class DatosIniciales {
     private long auto(boolean disponible, long idTienda, long idCategoria, String modelo, String marca,
                       String anio, String placa, String precioDia, String oferta) {
         Detalle_auto detalle = new Detalle_auto(
-                "https://picsum.photos/seed/" + placa + "/640/400", modelo, marca, anio, placa,
+                IMAGEN_POR_PLACA.get(placa), modelo, marca, anio, placa,
                 new BigDecimal(precioDia), oferta == null ? null : new BigDecimal(oferta));
         return autos.save(Auto.builder()
                 .disponibilidad(disponible).idTienda(idTienda).idCategoria(idCategoria).detalles(detalle).build())
