@@ -17,7 +17,6 @@ import com.rentacars.service.CategoriaService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -148,7 +147,6 @@ public class CategoriaServiceImpl implements CategoriaService {
      * =====================================================
      */
     @Override
-    @Transactional
     public CreateCategoriaResponse actualizarCategoria(
             Long id, UpdateCategoriaRequest request) {
 
@@ -179,7 +177,6 @@ public class CategoriaServiceImpl implements CategoriaService {
      * =====================================================
      */
     @Override
-    @Transactional
     public void eliminarCategoria(Long id) {
 
         Categoria categoria = categoriaRepository.findById(id)

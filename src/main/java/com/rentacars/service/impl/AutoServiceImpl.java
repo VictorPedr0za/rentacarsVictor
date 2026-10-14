@@ -10,30 +10,30 @@ import com.rentacars.dto.response.UpdateAutoResponse;
 import com.rentacars.exception.BadRequestException;
 import com.rentacars.exception.ResourceNotFoundException;
 import com.rentacars.mapper.AutoMapper;
-import com.rentacars.mapper.Detalle_autoMapper;
 import com.rentacars.model.Auto;
 import com.rentacars.model.Detalle_auto;
 import com.rentacars.repository.AlquilerRepository;
 import com.rentacars.repository.AutoRepository;
-import com.rentacars.repository.Detalle_autoRepository;
 import com.rentacars.service.AutoService;
 import com.rentacars.service.CategoriaService;
 import com.rentacars.service.TiendaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
+/**
+ * Logica de negocio de los autos.
+ *
+ * DE SQL A NOSQL: el detalle comercial (marca, modelo, precio...) ya no esta en otra tabla:
+ * viaja DENTRO del documento Auto (auto.getDetalles()). Por eso desaparecio el
+ * Detalle_autoRepository, las lecturas dobles y el @Transactional de HU-08.
+ */
 @Service
 @RequiredArgsConstructor
 public class AutoServiceImpl implements AutoService {
 
     private final AutoRepository autoRepository;
-    private final Detalle_autoRepository detalleAutoRepository;
     // valida FK antes de borrar
     private final AlquilerRepository alquilerRepository;
 
@@ -44,52 +44,34 @@ public class AutoServiceImpl implements AutoService {
 
     //obtiene lista autos, cada uno con su ficha comercial
     @Override
-    @Transactional(readOnly = true)
     public List<CreateAutoResponse> getAllAutos() {
-
-        List<Auto> autos = autoRepository.findAll();
-
-        // una sola consulta para todas las fichas
-        Map<Long, Detalle_auto> detallesPorAuto = detalleAutoRepository.findAll().stream()
-                .collect(Collectors.toMap(Detalle_auto::getIdAuto, Function.identity(), (a, b) -> a));
-
-        return autos.stream()
-                .map(auto -> AutoMapper.entityToCreateAutoResponse(auto, detallesPorAuto.get(auto.getIdAuto())))
+        return autoRepository.findAll().stream()
+                .map(auto -> AutoMapper.entityToCreateAutoResponse(auto, auto.getDetalles()))
                 .toList();
     }
 
     //HU-09
     @Override
-    @Transactional(readOnly = true)
     public List<CreateAutoResponse> buscarAutos(String ciudad, Long idCategoria) {
 
         // un string en blanco se trata como "sin filtro"
         String ciudadFiltro = (ciudad == null || ciudad.isBlank()) ? null : ciudad.trim();
 
-        List<Auto> autos = autoRepository.buscarDisponibles(ciudadFiltro, idCategoria);
-        if (autos.isEmpty()) {
-            return List.of();
-        }
-
-        // una sola consulta para las fichas de todos los autos encontrados
-        List<Long> ids = autos.stream().map(Auto::getIdAuto).toList();
-        Map<Long, Detalle_auto> detallesPorAuto = detalleAutoRepository.findByIdAutoIn(ids).stream()
-                .collect(Collectors.toMap(Detalle_auto::getIdAuto, Function.identity(), (a, b) -> a));
-
-        return autos.stream()
-                .map(auto -> AutoMapper.entityToCreateAutoResponse(auto, detallesPorAuto.get(auto.getIdAuto())))
+        return autoRepository.buscarDisponibles(ciudadFiltro, idCategoria).stream()
+                .map(auto -> AutoMapper.entityToCreateAutoResponse(auto, auto.getDetalles()))
                 .toList();
     }
 
     //HU-10
     @Override
-    @Transactional
     public CreateAutoResponse actualizarDetalles(Long id, UpdateDetalle_autoRequest request) {
         Auto auto = autoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Auto no encontrado con ID: " + id));
 
-        Detalle_auto detalle = detalleAutoRepository.findByIdAuto(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Detalle no encontrado para auto ID: " + id));
+        Detalle_auto detalle = auto.getDetalles();
+        if (detalle == null) {
+            throw new ResourceNotFoundException("Detalle no encontrado para auto ID: " + id);
+        }
 
         if (request.getPrecioDia() != null) {
             detalle.setPrecioDia(request.getPrecioDia());
@@ -101,27 +83,27 @@ public class AutoServiceImpl implements AutoService {
             detalle.setImagen(request.getImagen());
         }
 
-        Detalle_auto detalleGuardado = detalleAutoRepository.save(detalle);
+        // update parcial: solo reemplaza "detalles"; no pisa la disponibilidad si cambio justo ahora
+        Auto actualizado = autoRepository.actualizarParcial(Auto.builder().idAuto(id).detalles(detalle).build());
+        Detalle_auto d = actualizado.getDetalles();
 
         CreateAutoResponse response = new CreateAutoResponse();
-        response.setIdAuto(auto.getIdAuto());
-        response.setDisponibilidad(auto.getDisponibilidad());
-        response.setModelo(detalleGuardado.getModelo());
-        response.setMarca(detalleGuardado.getMarca());
-        response.setPrecioDia(detalleGuardado.getPrecioDia());
-        response.setOfertaPorcentaje(detalleGuardado.getOfertaPorcentaje());
-        response.setImagen(detalleGuardado.getImagen());
+        response.setIdAuto(actualizado.getIdAuto());
+        response.setDisponibilidad(actualizado.getDisponibilidad());
+        response.setModelo(d.getModelo());
+        response.setMarca(d.getMarca());
+        response.setPrecioDia(d.getPrecioDia());
+        response.setOfertaPorcentaje(d.getOfertaPorcentaje());
+        response.setImagen(d.getImagen());
         return response;
     }
 
     //HU-11
     @Override
-    @Transactional
     public CreateAutoResponse actualizarDisponibilidad(Long id, UpdateAutoRequest request) {
-        Auto auto = autoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Auto no encontrado con ID: " + id));
-        auto.setDisponibilidad(request.getDisponibilidad());
-        Auto autoGuardado = autoRepository.save(auto);
+        // update parcial: solo el campo disponibilidad; 404 si el auto no existe
+        Auto autoGuardado = autoRepository.actualizarParcial(
+                Auto.builder().idAuto(id).disponibilidad(request.getDisponibilidad()).build());
 
         CreateAutoResponse response = new CreateAutoResponse();
         response.setIdAuto(autoGuardado.getIdAuto());
@@ -129,82 +111,71 @@ public class AutoServiceImpl implements AutoService {
         return response;
     }
 
-    // HU-12 (Cardona): obtiene el detalle completo del auto (autos + detalles_autos), con precio calculado
+    // HU-12 (Cardona): obtiene el detalle completo del auto, con precio calculado
     @Override
-    @Transactional(readOnly = true)
     public CreateDetalle_autoResponse getAutoById(Long id) {
 
         Auto auto = autoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Auto no encontrado con id " + id));
 
-        Detalle_auto detalle = detalleAutoRepository.findByIdAuto(id)
-                .orElseThrow(() -> new ResourceNotFoundException("No se encontraron detalles para el auto con id " + id));
+        if (auto.getDetalles() == null) {
+            throw new ResourceNotFoundException("No se encontraron detalles para el auto con id " + id);
+        }
 
-        return AutoMapper.entityToCreateDetalle_autoResponse(auto, detalle);
+        return AutoMapper.entityToCreateDetalle_autoResponse(auto, auto.getDetalles());
     }
 
-    // HU-08 (Cifuentes): registra el auto y su ficha comercial en dos inserts dentro de una sola transaccion
+    // HU-08 (Cifuentes): registra el auto con su ficha comercial. Es UN solo documento, asi que se
+    // guarda con una sola escritura atomica (la placa unica se reserva en la misma transaccion).
     @Override
-    @Transactional
     public CreateAutoResponse createAuto(CreateAutoRequest request) {
 
         // la tienda y la categoria deben existir (404 si no)
         tiendaService.getTiendaById(request.getIdTienda());
         categoriaService.obtenerCategoria(request.getIdCategoria());
 
-        // la placa es unica
-        if (detalleAutoRepository.existsByPlaca(request.getPlaca())) {
+        // la placa es unica (consulta amistosa; la garantia real es el candado atomico del repository)
+        if (autoRepository.existsByPlaca(request.getPlaca())) {
             throw new BadRequestException("La placa ya esta registrada");
         }
 
-        // 1. primero el auto (nace disponible) para obtener su id_auto
+        // nace disponible, con su detalle anidado
         Auto auto = autoRepository.save(AutoMapper.createAutoRequestToEntity(request));
 
-        // 2. luego la ficha comercial usando ese id_auto; si falla, se revierte tambien el auto
-        Detalle_auto detalle = detalleAutoRepository.save(
-                Detalle_autoMapper.createDetalle_autoRequestToEntity(request, auto.getIdAuto()));
-
-        return AutoMapper.entityToCreateAutoResponseWithDetalles(auto, detalle);
+        return AutoMapper.entityToCreateAutoResponseWithDetalles(auto, auto.getDetalles());
     }
 
     //metodo para actualizar atributos
     @Override
-    @Transactional
     public UpdateAutoResponse updateAuto(Long id, UpdateAutoRequest updateAutoRequest) {
 
         //busca auto por id, 404 si no existe
-        Auto auto = autoRepository.findById(id)
+        autoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Auto no encontrado con id " + id));
 
-        //actualiza disponibilidad
-        if (updateAutoRequest.getDisponibilidad() != null) {
-            auto.setDisponibilidad(updateAutoRequest.getDisponibilidad());
-        }
-
-        //actualiza tienda, que debe existir
+        //la tienda y la categoria nuevas, si llegan, deben existir
         if (updateAutoRequest.getIdTienda() != null) {
             tiendaService.getTiendaById(updateAutoRequest.getIdTienda());
-            auto.setIdTienda(updateAutoRequest.getIdTienda());
         }
-
-        //actualiza categoria, que debe existir
         if (updateAutoRequest.getIdCategoria() != null) {
             categoriaService.obtenerCategoria(updateAutoRequest.getIdCategoria());
-            auto.setIdCategoria(updateAutoRequest.getIdCategoria());
         }
 
-        //guarda entidad actualizada
-        auto = autoRepository.save(auto);
+        //update parcial: solo cambian los campos que llegan con valor
+        Auto auto = autoRepository.actualizarParcial(Auto.builder()
+                .idAuto(id)
+                .disponibilidad(updateAutoRequest.getDisponibilidad())
+                .idTienda(updateAutoRequest.getIdTienda())
+                .idCategoria(updateAutoRequest.getIdCategoria())
+                .build());
 
-        //convierte a update response
         return AutoMapper.entityToUpdateAutoResponse(auto);
     }
 
 
     //metodo para eliminar auto
-    // HU-13 (Cardona): borra detalle y auto en cascada
+    // HU-13 (Cardona)
     @Override
-    @Transactional // une los dos deletes
     public void deleteAuto(Long id) {
 
         //busca auto por id, 404 si no existe
@@ -216,16 +187,12 @@ public class AutoServiceImpl implements AutoService {
             throw new BadRequestException("El auto esta alquilado, no se puede eliminar");
         }
 
-        //bloquea si tiene alquileres asociados
+        //bloquea si tiene alquileres asociados (DynamoDB no tiene llaves foraneas: se valida aqui)
         if (alquilerRepository.existsByIdAuto(id)) {
             throw new BadRequestException("El auto tiene alquileres registrados, no se puede eliminar");
         }
 
-        //borra detalle antes del auto
-        detalleAutoRepository.findByIdAuto(id)
-                .ifPresent(detalleAutoRepository::delete);
-
-        //borra el auto al final
+        //borra el auto (y libera su placa) en una sola transaccion
         autoRepository.delete(auto);
     }
 

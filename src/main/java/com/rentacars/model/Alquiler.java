@@ -1,72 +1,65 @@
 package com.rentacars.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondarySortKey;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import lombok.*;
-
 /**
- * Tabla "alquileres".
+ * Tabla DynamoDB "alquileres".
  *
- * SOBRE EL CAMPO estado:
- * Solo admite "ACTIVO" o "CERRADO" (la BD tiene un CHECK que lo obliga).
+ * SOBRE EL CAMPO estado: solo "ACTIVO" o "CERRADO" (antes lo obligaba un CHECK de PostgreSQL;
+ * ahora lo valida la aplicacion).
  *   - HU-18 crea el alquiler con estado = "ACTIVO"
  *   - HU-24 lo pasa a "CERRADO" al registrar la devolucion
- *   - HU-21 lista solo los que estan en "ACTIVO"
- * Si guardan cualquier otro texto, PostgreSQL rechaza el insert.
+ *   - HU-21 lista solo los que estan en "ACTIVO" y no vencidos
  *
- * RESTRICCIONES QUE YA VALIDA LA BASE DE DATOS:
- *   - fecha_fin >= fecha_inicio
- *   - precio_total >= 0
- * Aun asi conviene validarlas en el service para devolver un 400 con
- * mensaje entendible en vez de un error de PostgreSQL.
+ * INDICES (cada uno responde una consulta de la API sin recorrer toda la tabla):
+ *   - idCliente-index        -> HU-20 historial de un cliente
+ *   - idAuto-index           -> "este auto tiene alquileres?" (al borrar un auto)
+ *   - estado-fechaFin-index  -> HU-21 activos: estado = ACTIVO y fechaFin >= hoy
+ *                               (estado es la llave de particion y fechaFin la de orden,
+ *                                asi DynamoDB filtra por rango de fechas directamente)
  *
- * precio_total es DECIMAL(10,2) -> BigDecimal en Java (ver Detalle_auto
- * para los ejemplos de como se hacen los calculos).
+ * precioTotal es BigDecimal (dinero). Las fechas se guardan como texto ISO (2026-08-10),
+ * que ademas se ordena correctamente.
  */
-@Entity
-@Table(name = "alquileres")
-@Getter
-@Setter
+@DynamoDbBean
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Alquiler {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_alquiler")
+    @Getter(onMethod_ = @DynamoDbPartitionKey)
     private Long idAlquiler;
 
-    @Column(name = "id_cliente", nullable = false)
+    @Getter(onMethod_ = @DynamoDbSecondaryPartitionKey(indexNames = "idCliente-index"))
     private Long idCliente;
 
-    @Column(name = "id_auto", nullable = false)
+    @Getter(onMethod_ = @DynamoDbSecondaryPartitionKey(indexNames = "idAuto-index"))
     private Long idAuto;
 
-    @Column(name = "fecha_inicio", nullable = false)
     private LocalDate fechaInicio;
 
-    @Column(name = "fecha_fin", nullable = false)
+    @Getter(onMethod_ = @DynamoDbSecondarySortKey(indexNames = "estado-fechaFin-index"))
     private LocalDate fechaFin;
 
-    @Column(name = "precio_total", nullable = false, precision = 10, scale = 2)
     private BigDecimal precioTotal;
 
-    @Column(name = "ciudad_retirada", nullable = false, length = 50)
     private String ciudadRetirada;
 
-    @Column(name = "ciudad_devolucion", nullable = false, length = 50)
     private String ciudadDevolucion;
 
     /** Solo "ACTIVO" o "CERRADO" */
-    @Column(nullable = false, length = 20)
+    @Getter(onMethod_ = @DynamoDbSecondaryPartitionKey(indexNames = "estado-fechaFin-index"))
     private String estado;
 }

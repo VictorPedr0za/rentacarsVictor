@@ -31,3 +31,12 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Credenciales locales (no subir) ###
+.env
+
+### DynamoDB Local (datos locales de desarrollo) ###
+.dynamodb-local/
+dynamodb-local-metadata.json
+.env.*
+!.env.example

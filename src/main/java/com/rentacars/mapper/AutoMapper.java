@@ -61,10 +61,12 @@ public class AutoMapper {
     public static Auto createAutoRequestToEntity(CreateAutoRequest createAutoRequest){
 
         //construye entidad auto desde request; todo auto nuevo inicia disponible (HU-08)
+        //y lleva su ficha comercial anidada (documento unico)
         return Auto.builder()
                 .disponibilidad(true)
                 .idTienda(createAutoRequest.getIdTienda())
                 .idCategoria(createAutoRequest.getIdCategoria())
+                .detalles(Detalle_autoMapper.createDetalle_autoRequestToEntity(createAutoRequest))
                 .build();
     }
 

@@ -12,7 +12,6 @@ import com.rentacars.repository.TiendaRepository;
 import com.rentacars.service.TiendaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -34,10 +33,12 @@ import java.util.List;
  *       Eso es la INYECCION DE DEPENDENCIAS: Spring ve el constructor y
  *       nos entrega ya listos el repository y el mapper. No usamos "new".
  *
- *   @Transactional
- *       Todo lo que pase dentro del metodo es una sola operacion en la BD:
- *       o se guarda todo, o no se guarda nada. Si el metodo lanza una
- *       excepcion a la mitad, la BD se revierte sola.
+ * SOBRE LAS TRANSACCIONES (cambio al pasar a DynamoDB):
+ *       Antes habia @Transactional: Spring abria una transaccion SQL y la revertia sola.
+ *       DynamoDB no funciona asi. Las operaciones que necesitan "todo o nada" (por ejemplo
+ *       crear un alquiler Y ocupar el auto) usan TransactWriteItems DENTRO del repositorio
+ *       (ver repository/AlquilerRepository.java). Aqui, en el servicio, solo quedan las
+ *       reglas de negocio.
  */
 @Service
 @RequiredArgsConstructor
@@ -63,7 +64,6 @@ public class TiendaServiceImpl implements TiendaService {
      * Este metodo tiene 3 lineas porque asi debe ser: recibir, guardar, devolver.
      */
     @Override
-    @Transactional
     public CreateTiendaResponse crearTienda(CreateTiendaRequest request) {
 
         // 1. Traducir el DTO que llego a una entidad que la BD entienda
@@ -85,7 +85,6 @@ public class TiendaServiceImpl implements TiendaService {
      *     campo se revisa contra null antes de setearlo).
      */
     @Override
-    @Transactional
     public CreateTiendaResponse actualizarTienda(Long id, UpdateTiendaRequest request) {
         Tienda tienda = tiendaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tienda no encontrada con ID: " + id));
@@ -131,7 +130,6 @@ public class TiendaServiceImpl implements TiendaService {
     // HU-04 (Corrales)
     // ------------------------------------------------------------------
     @Override
-    @Transactional
     public void eliminarTienda(Long id) {
         Tienda tienda = tiendaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tienda no encontrada con ID: " + id));

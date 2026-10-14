@@ -1,44 +1,41 @@
 package com.rentacars.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
 
 /**
- * Tabla "tiendas" (ver script_bd.sql).
+ * Tabla DynamoDB "tiendas".
  *
- * Entidad JPA = una clase que representa una tabla de la base de datos.
- * Cada atributo de la clase es una columna de la tabla.
- *
- * OJO: la app corre en modo validate. Si cambias un campo aqui sin
- * cambiar la tabla en script_bd.sql, la aplicacion NO arranca.
+ * DE SQL A NOSQL:
+ *   - Antes: @Entity + @Table (una fila de PostgreSQL). Ahora: @DynamoDbBean (un "ítem" / documento).
+ *   - La llave primaria (partition key) es idTienda. DynamoDB NO la genera sola: la asigna
+ *     IdGenerator (ver repository/IdGenerator.java).
+ *   - ciudadNormalizada es una COPIA de "ciudad" en minusculas. Existe solo para poder buscar
+ *     "bogota" y encontrar "Bogota" sin importar mayusculas: en DynamoDB no hay ILIKE ni
+ *     LOWER() en la consulta, asi que el dato se guarda ya preparado para la consulta
+ *     (indice secundario global "ciudad-index").
  */
-@Entity                      // Le dice a Spring: "esto es una tabla"
-@Table(name = "tiendas")     // Nombre exacto de la tabla en PostgreSQL
-@Getter                      // Lombok genera los getters (getNombre(), etc.)
-@Setter                      // Lombok genera los setters (setNombre(), etc.)
-@NoArgsConstructor           // Constructor vacio: new Tienda()  -- JPA lo exige
-@AllArgsConstructor          // Constructor con todos los campos
+@DynamoDbBean
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Tienda {
 
-    @Id                                                  // Llave primaria
-    @GeneratedValue(strategy = GenerationType.IDENTITY)  // BIGSERIAL: la BD asigna el id sola
-    @Column(name = "id_tienda")
+    @Getter(onMethod_ = @DynamoDbPartitionKey)
     private Long idTienda;
 
-    @Column(nullable = false, length = 70)
     private String nombre;
 
-    @Column(nullable = false, length = 50)
     private String ciudad;
 
-    @Column(nullable = false, length = 70)
     private String direccion;
+
+    @Getter(onMethod_ = @DynamoDbSecondaryPartitionKey(indexNames = "ciudad-index"))
+    private String ciudadNormalizada;
 }

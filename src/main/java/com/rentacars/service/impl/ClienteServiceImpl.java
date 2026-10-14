@@ -12,7 +12,6 @@ import com.rentacars.repository.ClienteRepository;
 import com.rentacars.service.ClienteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -26,7 +25,6 @@ public class ClienteServiceImpl implements ClienteService {
     private final AlquilerRepository alquilerRepository;
 
     @Override
-    @Transactional
     public CreateClienteResponse crearCliente(CreateClienteRequest request) {
         if (clienteRepository.existsByEmail(request.getEmail())) {
             throw new BadRequestException("El email ya existe");
@@ -40,7 +38,6 @@ public class ClienteServiceImpl implements ClienteService {
 
     // HU-15 (Murcia): actualiza solo los campos que lleguen; el email no se toca nunca
     @Override
-    @Transactional
     public CreateClienteResponse actualizarCliente(Long id, UpdateClienteRequest request) {
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado con id " + id));
@@ -60,7 +57,6 @@ public class ClienteServiceImpl implements ClienteService {
 
     // HU-16 (Murcia): lista todos; la tarjeta sale enmascarada
     @Override
-    @Transactional(readOnly = true)
     public List<CreateClienteResponse> listarClientes() {
         return clienteRepository.findAll().stream()
                 .map(clienteMapper::toListResponse)
@@ -69,7 +65,6 @@ public class ClienteServiceImpl implements ClienteService {
 
     // HU-18: el cliente debe existir (404)
     @Override
-    @Transactional(readOnly = true)
     public CreateClienteResponse obtenerCliente(Long id) {
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado con id " + id));
@@ -78,7 +73,6 @@ public class ClienteServiceImpl implements ClienteService {
 
     // un cliente con alquileres no se borra: la llave foranea lo impide y se avisa con un 400 claro
     @Override
-    @Transactional
     public void eliminarCliente(Long id) {
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado con id " + id));

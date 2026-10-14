@@ -1,5 +1,10 @@
 # EMPEZAR AQUÍ
 
+> ⚠️ **Actualización: la base de datos ya no es PostgreSQL, es Amazon DynamoDB (NoSQL).**
+> Lo que esta guía dice sobre PostgreSQL, `script_bd.sql`, JPA/Hibernate, `@Entity`, `ddl-auto=validate` y `@Transactional`
+> quedó **desactualizado**. La explicación vigente (qué cambió, cómo correrlo en local y cómo desplegarlo en AWS)
+> está en **[GUIA_DYNAMODB.md](GUIA_DYNAMODB.md)**. El flujo Controller → Service → Repository → DTO → Mapper sigue igual.
+
 Guía para los 7 del equipo. Léela completa una vez (10 minutos) antes de escribir código.
 
 El **Día 0 ya está hecho**: la configuración, las 6 entidades, el manejo de errores y la **HU-01 completa como ejemplo**. Tu trabajo es copiar ese ejemplo para tu HU.

@@ -1,56 +1,46 @@
 package com.rentacars.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbIgnoreNulls;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
 
 /**
- * Tabla "autos".
+ * Tabla DynamoDB "autos": la unidad fisica, sus relaciones y su ficha comercial.
  *
- * MUY IMPORTANTE -- ESTA TABLA TIENE SOLO 4 COLUMNAS.
- * La marca, el modelo, el anio, la placa, el precio y la imagen NO estan aqui:
- * viven en la tabla detalles_autos (clase Detalle_auto).
- *
- * "autos"          -> la unidad fisica y sus relaciones (que tienda, que categoria,
- *                     si esta disponible)
- * "detalles_autos" -> la ficha comercial del vehiculo
- *
- * Por eso HU-08 (registrar auto con detalles) guarda en DOS tablas, y HU-12
- * (ver detalle completo) tiene que leer de las DOS y combinarlas.
- *
- * SOBRE LAS LLAVES FORANEAS (idTienda, idCategoria):
- * Se guardan como numeros simples (Long), no como objetos Tienda/Categoria.
- * Es la forma mas sencilla, coincide con los DTOs del backlog
- * ("id_tienda": 1) y evita errores tipicos de JPA como
- * LazyInitializationException o JSON infinito.
+ * DE SQL A NOSQL:
+ *   - Antes eran DOS tablas (autos + detalles_autos). Ahora es UN documento: la ficha
+ *     comercial vive anidada en "detalles" (ver Detalle_auto).
+ *   - Las llaves foraneas (idTienda, idCategoria) siguen siendo numeros simples, pero DynamoDB
+ *     NO las valida: lo hace AutoServiceImpl. Cada una tiene un indice secundario global
+ *     ("idTienda-index", "idCategoria-index") para responder rapido "que autos tiene esta
+ *     tienda / categoria" sin recorrer toda la tabla.
  */
-@Entity
-@Table(name = "autos")
-@Getter
-@Setter
+@DynamoDbBean
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Auto {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_auto")
+    @Getter(onMethod_ = @DynamoDbPartitionKey)
     private Long idAuto;
 
-    // En la BD tiene DEFAULT TRUE, pero HU-08 debe ponerlo en true
-    // explicitamente al crear el auto.
-    @Column(nullable = false)
+    // HU-08 lo pone en true al crear el auto
     private Boolean disponibilidad;
 
-    @Column(name = "id_tienda", nullable = false)
+    @Getter(onMethod_ = @DynamoDbSecondaryPartitionKey(indexNames = "idTienda-index"))
     private Long idTienda;
 
-    @Column(name = "id_categoria", nullable = false)
+    @Getter(onMethod_ = @DynamoDbSecondaryPartitionKey(indexNames = "idCategoria-index"))
     private Long idCategoria;
+
+    // documento anidado; @DynamoDbIgnoreNulls evita guardar atributos vacios (p. ej. sin oferta)
+    @Getter(onMethod_ = @DynamoDbIgnoreNulls)
+    private Detalle_auto detalles;
 }

@@ -1,7 +1,6 @@
 package com.rentacars.service.impl;
 
 import com.rentacars.dto.request.CreateAlquilerRequest;
-import com.rentacars.dto.request.UpdateAutoRequest;
 import com.rentacars.dto.response.CreateAlquilerResponse;
 import com.rentacars.dto.response.CreateDetalle_autoResponse;
 import com.rentacars.dto.response.UpdateAlquilerResponse;
@@ -16,7 +15,6 @@ import com.rentacars.service.AutoService;
 import com.rentacars.service.ClienteService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -41,7 +39,6 @@ public class AlquilerServiceImpl implements AlquilerService {
 
     //obtiene lista alquileres
     @Override
-    @Transactional(readOnly = true)
     public List<CreateAlquilerResponse> getAllAlquileres() {
 
         List<Alquiler> alquileres = alquilerRepository.findAll();
@@ -51,7 +48,6 @@ public class AlquilerServiceImpl implements AlquilerService {
 
     //obtiene alquiler segun id, 404 si no existe
     @Override
-    @Transactional(readOnly = true)
     public CreateAlquilerResponse getAlquilerById(Long id) {
 
         Alquiler alquiler = buscarAlquiler(id);
@@ -61,7 +57,6 @@ public class AlquilerServiceImpl implements AlquilerService {
     //crea alquiler
     // HU-18 (Pedroza): valida cliente y auto, calcula precio y marca el auto ocupado
     @Override
-    @Transactional // agrupa guardar el alquiler y actualizar la disponibilidad del auto
     public CreateAlquilerResponse createAlquiler(CreateAlquilerRequest createAlquilerRequest) {
 
         // valida que la fecha fin no sea anterior a la fecha inicio
@@ -109,11 +104,9 @@ public class AlquilerServiceImpl implements AlquilerService {
                 .estado(ESTADO_ACTIVO)
                 .build();
 
-        // guarda el alquiler ya con el precio calculado
-        alquiler = alquilerRepository.save(alquiler);
-
-        // marca el auto como no disponible, antes esto era un CatalogoFeignClient
-        autoService.actualizarDisponibilidad(alquiler.getIdAuto(), new UpdateAutoRequest(false, null, null));
+        // guarda el alquiler Y marca el auto como no disponible en UNA transaccion de DynamoDB.
+        // Si otro cliente alquilo el auto un instante antes, la condicion falla y llega un 400.
+        alquiler = alquilerRepository.crearOcupandoAuto(alquiler);
 
         // convierte la entidad guardada al dto de respuesta
         return AlquilerMapper.entityToCreateAlquilerResponse(alquiler);
@@ -121,7 +114,6 @@ public class AlquilerServiceImpl implements AlquilerService {
 
     //metodo para actualizar atributos
     @Override
-    @Transactional
     public UpdateAlquilerResponse updateAlquiler(Long id, UpdateAlquilerRequest updateAlquilerRequest) {
 
         //busca alquiler por id, 404 si no existe
@@ -183,7 +175,6 @@ public class AlquilerServiceImpl implements AlquilerService {
 
     //HU-24
     @Override
-    @Transactional
     public CreateAlquilerResponse registrarDevolucion(Long id) {
         Alquiler alquiler = buscarAlquiler(id);
 
@@ -192,10 +183,8 @@ public class AlquilerServiceImpl implements AlquilerService {
             throw new BadRequestException("El alquiler ya fue cerrado, la devolucion ya esta registrada");
         }
 
-        alquiler.setEstado(ESTADO_CERRADO);
-        alquiler = alquilerRepository.save(alquiler);
-
-        autoService.actualizarDisponibilidad(alquiler.getIdAuto(), new UpdateAutoRequest(true, null, null));
+        // cierra el alquiler y libera el auto en una sola transaccion (o las dos cosas, o ninguna)
+        alquiler = alquilerRepository.cerrarLiberandoAuto(alquiler);
 
         return AlquilerMapper.entityToCreateAlquilerResponse(alquiler);
     }
@@ -203,7 +192,6 @@ public class AlquilerServiceImpl implements AlquilerService {
     //metodo para eliminar alquiler
     // HU-22 (Cardona): cancela y libera el auto
     @Override
-    @Transactional // agrupa borrado y liberar auto
     public void deleteAlquiler(Long id) {
 
         //busca alquiler por id, 404 si no existe
@@ -214,19 +202,12 @@ public class AlquilerServiceImpl implements AlquilerService {
             throw new BadRequestException("El alquiler ya inició, no se puede cancelar");
         }
 
-        //borra el alquiler cancelado
-        alquilerRepository.delete(alquiler);
-
-        //arma datos para liberar auto
-        UpdateAutoRequest liberarAuto = new UpdateAutoRequest(true, null, null);
-
-        //libera el auto tras cancelar
-        autoService.actualizarDisponibilidad(alquiler.getIdAuto(), liberarAuto);
+        //borra el alquiler cancelado Y libera el auto en una sola transaccion
+        alquilerRepository.cancelarLiberandoAuto(alquiler);
     }
 
     // HU-20 (Pedroza): historial de alquileres de un cliente
     @Override
-    @Transactional(readOnly = true)
     public List<CreateAlquilerResponse> historialPorCliente(Long idCliente) {
 
         // busca los alquileres del cliente, lista vacia si no tiene ninguno
@@ -238,7 +219,6 @@ public class AlquilerServiceImpl implements AlquilerService {
 
     // HU-21 (Pedroza): alquileres activos, aun no vencidos y no cerrados
     @Override
-    @Transactional(readOnly = true)
     public List<CreateAlquilerResponse> listarActivos() {
 
         // filtra por fecha fin mayor o igual a hoy y estado ACTIVO

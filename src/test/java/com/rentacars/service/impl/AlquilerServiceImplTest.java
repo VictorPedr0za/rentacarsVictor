@@ -1,7 +1,6 @@
 package com.rentacars.service.impl;
 
 import com.rentacars.dto.request.CreateAlquilerRequest;
-import com.rentacars.dto.request.UpdateAutoRequest;
 import com.rentacars.dto.response.CreateAlquilerResponse;
 import com.rentacars.dto.response.CreateClienteResponse;
 import com.rentacars.dto.response.CreateDetalle_autoResponse;
@@ -25,7 +24,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -68,20 +66,14 @@ class AlquilerServiceImplTest {
                 .build();
     }
 
-    private boolean disponibilidadEnviada() {
-        ArgumentCaptor<UpdateAutoRequest> captor = ArgumentCaptor.forClass(UpdateAutoRequest.class);
-        verify(autoService).actualizarDisponibilidad(eq(3L), captor.capture());
-        return captor.getValue().getDisponibilidad();
-    }
-
     // ---------------------------------------------------------------- HU-18
 
     @Test
-    void createAlquiler_calculaPrecioTotalConOfertaPorLosDias_yOcupaElAuto() {
+    void createAlquiler_calculaPrecioTotalConOfertaPorLosDias_yLoGuardaOcupandoElAutoEnUnaTransaccion() {
         LocalDate inicio = LocalDate.now().plusDays(10);
         when(clienteService.obtenerCliente(1L)).thenReturn(new CreateClienteResponse());
         when(autoService.getAutoById(1L)).thenReturn(autoDisponible());
-        when(alquilerRepository.save(any(Alquiler.class))).thenAnswer(inv -> {
+        when(alquilerRepository.crearOcupandoAuto(any(Alquiler.class))).thenAnswer(inv -> {
             Alquiler a = inv.getArgument(0);
             a.setIdAlquiler(1L);
             return a;
@@ -93,9 +85,11 @@ class AlquilerServiceImplTest {
         assertThat(response.getPrecioTotal()).isEqualByComparingTo("405000");
         assertThat(response.getEstado()).isEqualTo("ACTIVO");
 
-        ArgumentCaptor<UpdateAutoRequest> captor = ArgumentCaptor.forClass(UpdateAutoRequest.class);
-        verify(autoService).actualizarDisponibilidad(eq(1L), captor.capture());
-        assertThat(captor.getValue().getDisponibilidad()).isFalse();
+        // el alquiler y el cambio de disponibilidad del auto salen en UNA sola operacion del repositorio
+        ArgumentCaptor<Alquiler> guardado = ArgumentCaptor.forClass(Alquiler.class);
+        verify(alquilerRepository).crearOcupandoAuto(guardado.capture());
+        assertThat(guardado.getValue().getIdAuto()).isEqualTo(1L);
+        assertThat(guardado.getValue().getEstado()).isEqualTo("ACTIVO");
     }
 
     @Test
@@ -105,7 +99,7 @@ class AlquilerServiceImplTest {
         assertThatThrownBy(() -> service.createAlquiler(request(hoy, hoy.plusDays(2))))
                 .isInstanceOf(BadRequestException.class);
 
-        verify(alquilerRepository, never()).save(any());
+        verify(alquilerRepository, never()).crearOcupandoAuto(any());
     }
 
     @Test
@@ -117,7 +111,7 @@ class AlquilerServiceImplTest {
         assertThatThrownBy(() -> service.createAlquiler(request(inicio, inicio.plusDays(2))))
                 .isInstanceOf(ResourceNotFoundException.class);
 
-        verify(alquilerRepository, never()).save(any());
+        verify(alquilerRepository, never()).crearOcupandoAuto(any());
     }
 
     @Test
@@ -132,8 +126,21 @@ class AlquilerServiceImplTest {
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("disponible");
 
-        verify(alquilerRepository, never()).save(any());
-        verify(autoService, never()).actualizarDisponibilidad(any(), any());
+        verify(alquilerRepository, never()).crearOcupandoAuto(any());
+    }
+
+    @Test
+    void createAlquiler_siOtroClienteGanoElAutoEnElInstanteLaTransaccionRechazaConLaCondicion() {
+        LocalDate inicio = LocalDate.now().plusDays(5);
+        when(clienteService.obtenerCliente(1L)).thenReturn(new CreateClienteResponse());
+        when(autoService.getAutoById(1L)).thenReturn(autoDisponible());
+        // el repositorio traduce la condicion fallida de DynamoDB a un 400
+        when(alquilerRepository.crearOcupandoAuto(any()))
+                .thenThrow(new BadRequestException("El auto no esta disponible"));
+
+        assertThatThrownBy(() -> service.createAlquiler(request(inicio, inicio.plusDays(2))))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("El auto no esta disponible");
     }
 
     // ---------------------------------------------------------------- HU-22
@@ -146,44 +153,45 @@ class AlquilerServiceImplTest {
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("El alquiler ya inició, no se puede cancelar");
 
-        verify(alquilerRepository, never()).delete(any());
+        verify(alquilerRepository, never()).cancelarLiberandoAuto(any());
     }
 
     @Test
-    void deleteAlquiler_antesDeIniciarLoBorraYLiberaElAuto() {
+    void deleteAlquiler_antesDeIniciarLoCancelaYLiberaElAutoEnUnaTransaccion() {
         Alquiler futuro = alquiler("ACTIVO", LocalDate.now().plusDays(4));
         when(alquilerRepository.findById(10L)).thenReturn(Optional.of(futuro));
 
         service.deleteAlquiler(10L);
 
-        verify(alquilerRepository).delete(futuro);
-        assertThat(disponibilidadEnviada()).isTrue();
+        verify(alquilerRepository).cancelarLiberandoAuto(futuro);
     }
 
     // ---------------------------------------------------------------- HU-24
 
     @Test
-    void registrarDevolucion_cierraElAlquilerYLiberaElAuto() {
+    void registrarDevolucion_cierraElAlquilerYLiberaElAutoEnUnaTransaccion() {
         Alquiler activo = alquiler("ACTIVO", LocalDate.now().minusDays(2));
         when(alquilerRepository.findById(10L)).thenReturn(Optional.of(activo));
-        when(alquilerRepository.save(activo)).thenReturn(activo);
+        when(alquilerRepository.cerrarLiberandoAuto(activo)).thenAnswer(inv -> {
+            activo.setEstado("CERRADO");
+            return activo;
+        });
 
         CreateAlquilerResponse response = service.registrarDevolucion(10L);
 
         assertThat(response.getEstado()).isEqualTo("CERRADO");
-        assertThat(disponibilidadEnviada()).isTrue();
+        verify(alquilerRepository).cerrarLiberandoAuto(activo);
     }
 
     @Test
-    void registrarDevolucion_siYaEstabaCerradoLanza400YNoTocaElAuto() {
+    void registrarDevolucion_siYaEstabaCerradoLanza400YNoTocaNada() {
         when(alquilerRepository.findById(10L))
                 .thenReturn(Optional.of(alquiler("CERRADO", LocalDate.now().minusDays(9))));
 
         assertThatThrownBy(() -> service.registrarDevolucion(10L))
                 .isInstanceOf(BadRequestException.class);
 
-        verify(alquilerRepository, never()).save(any());
-        verify(autoService, never()).actualizarDisponibilidad(any(), any());
+        verify(alquilerRepository, never()).cerrarLiberandoAuto(any());
     }
 
     @Test

@@ -2,7 +2,11 @@ package com.rentacars.exception;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
-import org.springframework.dao.DataIntegrityViolationException;
+import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
+import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
+import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -26,6 +30,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
  * Y en los controllers NUNCA hay que hacer:
  *     return ResponseEntity.status(404).body(...)
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -95,14 +100,34 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * La base de datos rechazo la operacion por una restriccion (llave foranea o UNIQUE):
-     * por ejemplo borrar una tienda que aun tiene autos -> 409 Conflict.
-     * Es la red de seguridad; las reglas conocidas se validan antes en el service con un 400 claro.
+     * DynamoDB rechazo una escritura condicional o una transaccion (por ejemplo, dos personas
+     * intentaron cambiar o alquilar lo mismo al mismo tiempo) -> 409 Conflict.
+     * Es la red de seguridad: las reglas conocidas (email repetido, auto no disponible...) ya se
+     * traducen a un 400 claro en los repositorios y servicios.
      */
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorResponse> manejarIntegridad(DataIntegrityViolationException ex) {
+    @ExceptionHandler({ConditionalCheckFailedException.class, TransactionCanceledException.class})
+    public ResponseEntity<ErrorResponse> manejarConflictoDeDatos(DynamoDbException ex) {
         return construir(HttpStatus.CONFLICT,
-                "La operacion viola una restriccion de datos: el registro esta relacionado con otros o repite un valor unico");
+                "La operacion no se pudo completar porque los datos cambiaron al mismo tiempo. Intenta de nuevo.");
+    }
+
+    /**
+     * No hay conexion con DynamoDB o faltan credenciales de AWS (error del cliente del SDK) -> 503.
+     * El detalle tecnico va al log, no a la respuesta.
+     */
+    @ExceptionHandler(SdkClientException.class)
+    public ResponseEntity<ErrorResponse> manejarSinConexion(SdkClientException ex) {
+        log.error("No se pudo conectar con DynamoDB", ex);
+        return construir(HttpStatus.SERVICE_UNAVAILABLE,
+                "No se pudo conectar con la base de datos (DynamoDB). Revisa la conexion y las credenciales de AWS.");
+    }
+
+    /** Cualquier otro error devuelto por el servicio DynamoDB (permisos, tabla inexistente...) -> 503. */
+    @ExceptionHandler(DynamoDbException.class)
+    public ResponseEntity<ErrorResponse> manejarErrorDynamo(DynamoDbException ex) {
+        log.error("Error de DynamoDB", ex);
+        String codigo = ex.awsErrorDetails() != null ? ex.awsErrorDetails().errorCode() : "desconocido";
+        return construir(HttpStatus.SERVICE_UNAVAILABLE, "Error en la base de datos (DynamoDB): " + codigo);
     }
 
     private ResponseEntity<ErrorResponse> construir(HttpStatus estado, String mensaje) {

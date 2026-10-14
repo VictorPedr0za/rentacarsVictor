@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.dao.DataIntegrityViolationException;
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -19,10 +19,10 @@ class TiendaControllerTest {
     @Autowired MockMvc mockMvc;
     @MockitoBean TiendaService tiendaService;
 
-    // HU-04: borrar una tienda que todavia tiene autos no debe terminar en un 500
+    // un conflicto de escritura de DynamoDB (condicion fallida) no debe terminar en un 500
     @Test
-    void deleteTienda_conAutosAsociadosResponde409ConFormatoErrorResponse() throws Exception {
-        Mockito.doThrow(new DataIntegrityViolationException("fk_autos_tienda"))
+    void deleteTienda_conConflictoDeEscrituraEnDynamoDbResponde409ConFormatoErrorResponse() throws Exception {
+        Mockito.doThrow(ConditionalCheckFailedException.builder().message("conflicto de escritura").build())
                 .when(tiendaService).eliminarTienda(1L);
 
         mockMvc.perform(delete("/tiendas/1"))
